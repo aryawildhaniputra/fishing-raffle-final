@@ -15,6 +15,7 @@ class ParticipantGroupsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Development seeder - commented out for production deployment
         $cities = [
             'Gondanglegi', 'Turen', 'Kepanjen', 'Lawang', 'Singosari', 'Batu', 
             'Malang', 'Surabaya', 'Sidoarjo', 'Pasuruan', 'Probolinggo', 'Jember',

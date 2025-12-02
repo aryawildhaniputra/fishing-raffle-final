@@ -13,6 +13,7 @@ class StallSeeder extends Seeder
      */
     public function run(): void
     {
+        // Development seeder - commented out for production deployment
         Stall::create([
             "total_stall" => 211,
             "created_at" => now(),

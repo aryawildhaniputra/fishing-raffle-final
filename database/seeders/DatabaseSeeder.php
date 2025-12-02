@@ -16,6 +16,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Production deployment - only seed admin users
+        // $this->call([
+        //     ProductionSeeder::class,
+        // ]);
+
+        // Development seeders - commented out for production deployment
         $this->call([
             UserSeeder::class,
             EventSeeder::class,

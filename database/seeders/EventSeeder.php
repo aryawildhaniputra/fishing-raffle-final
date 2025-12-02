@@ -13,6 +13,7 @@ class EventSeeder extends Seeder
      */
     public function run(): void
     {
+        // Development seeder - commented out for production deployment
         // Data manual yang sudah ada
         Event::insert([
             [
@@ -56,6 +57,7 @@ class EventSeeder extends Seeder
                 "updated_at" => now(),
             ],
         ]);
+
 
         // // Generate 200 data random untuk event mancing
         // $events = [];

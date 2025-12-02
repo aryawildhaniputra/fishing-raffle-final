@@ -13,6 +13,7 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        // Development seeder - commented out for production deployment
         User::insert([
             [
                 "name" => "admin",
