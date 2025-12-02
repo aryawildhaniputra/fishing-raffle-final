@@ -1716,7 +1716,7 @@
             // Update modal content based on raffle status
             if (raffleStatus === 'COMPLETED' || raffleStatus === 'completed') {
                 // Data sudah diundi - tampilkan peringatan khusus
-                $('.modal-body').html(
+                $('#deleteModal .modal-body').html(
                     `<h5 class="text-center mb-3">Anda yakin ingin menghapus pendaftar <strong>${name}</strong>?</h5>` +
                     `<div class="alert alert-warning mb-0">` +
                     `<i class="ri-alert-line me-2"></i>` +
@@ -1730,13 +1730,21 @@
                 );
             } else {
                 // Data belum diundi - pesan standar
-                $('.modal-body').html(
+                $('#deleteModal .modal-body').html(
                     `<h4 class="text-center">Apakah anda yakin menghapus pendaftar <span class="registrant-name">${name}</span>?</h4>`
                 );
             }
 
             // Show delete modal
             $('#deleteModal').modal('show');
+        });
+
+        // Reset delete modal content when closed
+        $('#deleteModal').on('hidden.bs.modal', function() {
+            // Reset to default content
+            $('#deleteModal .modal-body').html(
+                `<h4 class="text-center">Apakah anda yakin menghapus pendaftar <span class="registrant-name" id="registrant-name"></span> ?</h4>`
+            );
         });
 
         // Handle close button untuk warning modal
