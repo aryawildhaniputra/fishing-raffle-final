@@ -29,6 +29,8 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::group(['prefix' => 'participant-group'], function () {
             Route::post('/', [EventController::class, 'storeParticipantGroup'])->name('admin.store.participant.group');
+            Route::post('/{eventId}/import', [EventController::class, 'importParticipantGroups'])->name('admin.import.participant.groups');
+            Route::get('/download-template', [EventController::class, 'downloadTemplateImport'])->name('admin.download.template.import');
             Route::put('/{id}', [EventController::class, 'updateParticipantGroup'])->name('admin.update.participant.group');
             Route::get('/{id}', [EventController::class, 'getParticipantGroupByID'])->name('admin.get.ParticipantGroupByID');
             Route::delete('/{id}', [EventController::class, 'destroyParticipantGroupByID'])->name('admin.destroy.ParticipantGroup');

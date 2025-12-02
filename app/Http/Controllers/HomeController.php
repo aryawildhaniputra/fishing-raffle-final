@@ -58,9 +58,13 @@ class HomeController extends Controller
             ->orderBy('year', 'desc')
             ->pluck('year');
         
+        // Get all event names for duplicate validation (not just paginated)
+        $allEventNames = Event::pluck('name');
+        
         return view('admin_views.home_page', [
             'events' => $events,
             'availableYears' => $availableYears,
+            'allEventNames' => $allEventNames,
             'currentFilters' => [
                 'search' => $search,
                 'month' => $month,
@@ -76,12 +80,13 @@ class HomeController extends Controller
             [
                 'name' => 'required|string',
                 'event_date' => 'required|date',
-                'price' => 'required|numeric|min:0',
+                'price' => 'required|numeric|min:0|max:2147483647',
             ],
             [
                 'name.required' => "Nama Event Wajib Diisi",
                 'event_date.required' => "Tanggal Event Wajib Diisi",
                 'price.required' => "Harga Tiket Event Wajib Diisi",
+                'price.max' => "Harga Tiket terlalu besar (maksimal Rp 2.147.483.647)",
             ]
         );
 
@@ -92,6 +97,14 @@ class HomeController extends Controller
 
         try {
             $data = $validator->safe()->all();
+            
+            // Check if event name already exists
+            $existedEvent = Event::where('name', $data['name'])->first();
+            
+            if ($existedEvent) {
+                throw new Error("Nama Event Telah Digunakan");
+            }
+            
             $data['total_registrant'] = 0;
 
             Event::create($data);
@@ -107,7 +120,9 @@ class HomeController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'string',
             'event_date' => 'date',
-            'price' => 'numeric|min:0',
+            'price' => 'numeric|min:0|max:2147483647',
+        ], [
+            'price.max' => "Harga Tiket terlalu besar (maksimal Rp 2.147.483.647)",
         ]);
 
         if ($validator->fails()) {
@@ -123,9 +138,20 @@ class HomeController extends Controller
             if (!isset($event)) {
                 throw new Error("Data Tidak Ditemukan");
             }
+            
+            // Check if new name already exists (excluding current event)
+            if (isset($data['name'])) {
+                $existedEvent = Event::where('name', $data['name'])
+                    ->where('id', '!=', $ID)
+                    ->first();
+                
+                if ($existedEvent) {
+                    throw new Error("Nama Event Telah Digunakan");
+                }
+            }
 
             $event->update($data);
-            return redirect()->back()->with('success', 'Data Event Berhasil Ditambahkan');
+            return redirect()->back()->with('success', 'Data Event Berhasil Diperbarui');
         } catch (\Throwable $th) {
             return back()
                 ->with('errors', $th->getMessage());

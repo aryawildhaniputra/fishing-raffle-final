@@ -88,6 +88,9 @@
                                     <span class="fw-medium">Tambah Pendaftar</span>
                                 </div>
                             </a>
+                            <button onclick="openImportModal()" class="btn btn-info text-white">
+                                <i class="ri-file-excel-2-line me-1"></i> Import
+                            </button>
                             <div class="dropdown">
                                 <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown"
                                     data-bs-toggle="dropdown" aria-expanded="false">
@@ -95,7 +98,8 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
                                     <li><button class="dropdown-item" id="export-pdf" type="button">PDF</button></li>
-                                    <li><button class="dropdown-item" id="export-excel" type="button">Excel</button>
+                                    <li><button class="dropdown-item" id="export-excel" type="button">Excel
+                                        </button>
                                     </li>
                                 </ul>
                             </div>
@@ -638,28 +642,52 @@
                     id="layout-tab-pane" role="tabpanel" aria-labelledby="raffle-tab-pane" tabindex="0">
 
                     <!-- Legenda Infografis -->
-                    <div class="legend-wrapper mb-3 p-3 bg-light rounded border">
-                        <div class="d-flex align-items-center mb-2">
-                            <i class="ri-information-line me-2" style="font-size: 20px;"></i>
-                            <h6 class="fw-bold mb-0">Keterangan:</h6>
+                    <div class="legend-wrapper mb-3 p-4 rounded-4"
+                        style="background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%); box-shadow: 0 4px 15px rgba(45, 106, 79, 0.3);">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-wrapper me-3 d-flex align-items-center justify-content-center rounded-circle"
+                                style="width: 45px; height: 45px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);">
+                                <i class="ri-information-line text-white" style="font-size: 24px;"></i>
+                            </div>
+                            <h5 class="fw-bold mb-0 text-white" style="letter-spacing: 0.5px;">Keterangan</h5>
                         </div>
                         <div class="d-flex gap-4 flex-wrap">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="legend-box bg-warning border border-2 rounded"
-                                    style="width: 30px; height: 30px;"></div>
-                                <span class="fw-semibold">Tersedia</span>
+                            <div class="d-flex align-items-center gap-3 px-3 py-2 rounded-3"
+                                style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);">
+                                <div class="legend-box bg-warning border-0 rounded-3 shadow"
+                                    style="width: 35px; height: 35px;"></div>
+                                <span class="fw-semibold text-white" style="font-size: 1rem;">Tersedia</span>
                             </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="legend-box bg-danger border border-2 rounded"
-                                    style="width: 30px; height: 30px;"></div>
-                                <span class="fw-semibold">Terisi</span>
+                            <div class="d-flex align-items-center gap-3 px-3 py-2 rounded-3"
+                                style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);">
+                                <div class="legend-box bg-danger border-0 rounded-3 shadow"
+                                    style="width: 35px; height: 35px;"></div>
+                                <span class="fw-semibold text-white" style="font-size: 1rem;">Terisi</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="layout-wrapper d-lg-flex gap-3">
+                    <!-- Search Autocomplete Card -->
+                    <div class="search-card mb-3 p-4 rounded-4"
+                        style="background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%); box-shadow: 0 4px 15px rgba(45, 106, 79, 0.3);">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="icon-wrapper me-3 d-flex align-items-center justify-content-center rounded-circle"
+                                style="width: 45px; height: 45px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);">
+                                <i class="ri-search-line text-white" style="font-size: 24px;"></i>
+                            </div>
+                            <h5 class="fw-bold mb-0 text-white" style="letter-spacing: 0.5px;">Cari Peserta</h5>
+                        </div>
+                        <div class="position-relative" style="max-width: 100%;">
+                            <input type="text" id="searchParticipant" class="form-control form-control-lg border-0"
+                                placeholder="🔍 Ketik nama peserta untuk mencari..." autocomplete="off"
+                                style="padding: 16px 24px; border-radius: 12px; font-size: 1rem; background: rgba(255, 255, 255, 0.95); transition: all 0.3s ease; font-weight: 500;">
+                            <div id="autocompleteDropdown" class="autocomplete-dropdown"></div>
+                        </div>
+                    </div>
+
+                    <div class="layout-wrapper">
                         <!-- Nomor Lapak Section dengan Scroll dan Background Kolam Lele -->
-                        <div class="layout-wrap col-12 col-lg-8 h-100"
+                        <div class="layout-wrap col-12 h-100"
                             style="max-height: 820px; 
                                    overflow-y: auto; 
                                    overflow-x: hidden;
@@ -720,20 +748,41 @@
 
                             <!-- Columns Row -->
                             <div class="d-flex flex-grow-1">
-                                <div class="left-column col-1 d-flex gap-1" style="position: relative; z-index: 2;">
-                                    {{-- <div class="stall-line col-1 border-bottom bg-dark" style="opacity: 0.3;"></div> --}}
-                                    <div class="box-wrapper col-10 d-flex flex-column gap-1">
+                                <!-- LEFT COLUMN: Stall numbers on left, names on right -->
+                                <div class="left-column col-1 d-flex gap-2" style="position: relative; z-index: 2;">
+                                    <div class="box-wrapper d-flex flex-column gap-2" style="min-width: 70px;">
                                         @foreach ($leftColumnParticipant as $data)
                                             <div @class([
                                                 'stall-box',
-                                                'ratio ratio-1x1 border border-2 rounded d-flex justify-content-center align-items-center fw-bold text-white',
+                                                'border border-3 rounded d-flex justify-content-center align-items-center fw-bold text-white',
                                                 'bg-danger' => $data['isBooked'],
                                                 'bg-warning' => !$data['isBooked'],
                                             ])
                                                 data-stall-number="{{ $data['stall_number'] }}"
-                                                style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                                                data-participant-name="{{ $data['participant_name'] ?? '' }}"
+                                                style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); min-height: 65px; font-size: 1.3rem; min-width: 70px; border-color: white !important;">
                                                 {{ $data['stall_number'] }}
                                             </div>
+                                        @endforeach
+                                    </div>
+                                    <div class="name-wrapper d-flex flex-column gap-2">
+                                        @foreach ($leftColumnParticipant as $data)
+                                            @if ($data['participant_name'])
+                                                <div @class([
+                                                    'participant-name-card border border-3 rounded d-flex align-items-center px-3 text-white fw-bold',
+                                                    'bg-danger' => $data['isBooked'],
+                                                    'bg-warning' => !$data['isBooked'],
+                                                ])
+                                                    style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); min-height: 65px; font-size: 0.95rem; width: 280px; text-align: left; word-wrap: break-word; overflow-wrap: break-word; border-color: white !important;"
+                                                    title="{{ $data['participant_name'] }}">
+                                                    {{ $data['participant_name'] }}
+                                                </div>
+                                            @else
+                                                <div class="participant-name-card bg-secondary border border-3 rounded d-flex align-items-center justify-content-center px-3 text-white"
+                                                    style="box-shadow: 0 4px 8px rgba(0,0,0,0.2); min-height: 65px; font-size: 0.9rem; font-style: italic; width: 280px; border-color: white !important;">
+                                                    Belum Diundi
+                                                </div>
+                                            @endif
                                         @endforeach
                                     </div>
                                 </div>
@@ -742,23 +791,44 @@
                                     <!-- Area kosong untuk kolam, background sudah di parent -->
                                 </div>
 
-                                <div class="right-column col-1 d-flex gap-1 justify-content-end"
+                                <!-- RIGHT COLUMN: Names on left, stall numbers on right -->
+                                <div class="right-column col-1 d-flex gap-2 justify-content-end"
                                     style="position: relative; z-index: 2;">
-                                    <div class="box-wrapper col-10 d-flex flex-column gap-1">
+                                    <div class="name-wrapper d-flex flex-column gap-2">
+                                        @foreach ($rightColumnParticipant as $data)
+                                            @if ($data['participant_name'])
+                                                <div @class([
+                                                    'participant-name-card border border-3 rounded d-flex align-items-center px-3 text-white fw-bold',
+                                                    'bg-danger' => $data['isBooked'],
+                                                    'bg-warning' => !$data['isBooked'],
+                                                ])
+                                                    style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); min-height: 65px; font-size: 0.95rem; width: 280px; text-align: right; word-wrap: break-word; overflow-wrap: break-word; border-color: white !important;"
+                                                    title="{{ $data['participant_name'] }}">
+                                                    {{ $data['participant_name'] }}
+                                                </div>
+                                            @else
+                                                <div class="participant-name-card bg-secondary border border-3 rounded d-flex align-items-center justify-content-center px-3 text-white"
+                                                    style="box-shadow: 0 4px 8px rgba(0,0,0,0.2); min-height: 65px; font-size: 0.9rem; font-style: italic; width: 280px; border-color: white !important;">
+                                                    Belum Diundi
+                                                </div>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                    <div class="box-wrapper d-flex flex-column gap-2" style="min-width: 70px;">
                                         @foreach ($rightColumnParticipant as $data)
                                             <div @class([
                                                 'stall-box',
-                                                'ratio ratio-1x1 border border-2 rounded d-flex justify-content-center align-items-center fw-bold text-white',
+                                                'border border-3 rounded d-flex justify-content-center align-items-center fw-bold text-white',
                                                 'bg-danger' => $data['isBooked'],
                                                 'bg-warning' => !$data['isBooked'],
                                             ])
                                                 data-stall-number="{{ $data['stall_number'] }}"
-                                                style="box-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                                                data-participant-name="{{ $data['participant_name'] ?? '' }}"
+                                                style="box-shadow: 0 4px 8px rgba(0,0,0,0.3); min-height: 65px; font-size: 1.3rem; min-width: 70px; border-color: white !important;">
                                                 {{ $data['stall_number'] }}
                                             </div>
                                         @endforeach
                                     </div>
-                                    {{-- <div class="stall-line col-1 border-bottom bg-dark" style="opacity: 0.3;"></div> --}}
                                 </div>
                             </div>
 
@@ -781,38 +851,6 @@
                                         TEMPAT SIARAN
                                     </span>
                                     <i class="ri-broadcast-line" style="font-size: 24px; color: #ffd700;"></i>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Daftar Pemancing Section dengan Scroll -->
-                        <div class="list-content-wrapper col-12 col-lg-4 p-2">
-                            <div class="list-wrapper border border-2 p-1 rounded">
-                                <p class="fw-bold fs-4 text-center mb-2">Daftar Pemancing</p>
-
-                                <!-- Search Box -->
-                                <div class="mb-2 px-2">
-                                    <input type="text" id="searchPemancing" class="form-control form-control-sm"
-                                        placeholder="🔍 Cari nama pemancing...">
-                                </div>
-
-                                <div class="list-wrap d-flex flex-column gap-1"
-                                    style="max-height: 720px; overflow-y: auto;">
-                                    @foreach ($participants as $participant)
-                                        <div class="box-list col-12 border p-2 fw-bold rounded participant-item"
-                                            data-participant-name="{{ strtolower($participant['participant_name']) }}"
-                                            data-stall-number="{{ $participant['stall_number'] ?? '' }}"
-                                            style="cursor: {{ $participant['stall_number'] ? 'pointer' : 'default' }}; transition: all 0.2s;"
-                                            onclick="{{ $participant['stall_number'] ? 'scrollToStall(' . $participant['stall_number'] . ')' : '' }}">
-                                            {{ $loop->iteration . '. ' . $participant['participant_name'] }}
-                                            @if ($participant['stall_number'])
-                                                <span class="badge bg-success ms-2">Lapak
-                                                    {{ $participant['stall_number'] }}</span>
-                                            @else
-                                                <span class="badge bg-secondary ms-2">Belum Diundi</span>
-                                            @endif
-                                        </div>
-                                    @endforeach
                                 </div>
                             </div>
                         </div>
@@ -1041,40 +1079,48 @@
                             style="border: none; padding: 20px 30px 30px; background: #f8f9fa; z-index: 2;">
 
                             <div class="confirm-wrapper-multiple d-flex justify-content-center gap-3 w-100">
-                                <button type="button"
-                                    class="btn btn-under btn-confirm-draw btn-draw-modal flex-fill d-flex align-items-center justify-content-center"
-                                    data-confirm-draw-type="0" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-title="Pilih lapak bagian bawah"
-                                    style="border-radius: 12px; 
-                                           padding: 14px; 
-                                           font-weight: 700; 
-                                           font-size: 1.1rem; 
-                                           background: linear-gradient(135deg, #0d5c3a 0%, #1a7a4f 100%); 
-                                           border: 3px solid #ffd700; 
-                                           transition: all 0.3s ease; 
-                                           box-shadow: 0 6px 15px rgba(13, 92, 58, 0.3);
-                                           color: white;">
-                                    <i class="ri-arrow-down-line"
-                                        style="font-size: 1.3rem; line-height: 1; vertical-align: middle; margin-right: 8px;"></i>
-                                    <span style="line-height: 1; vertical-align: middle;">BAWAH</span>
-                                </button>
-                                <button type="button"
-                                    class="btn btn-upper btn-confirm-draw btn-draw-modal flex-fill d-flex align-items-center justify-content-center"
-                                    data-confirm-draw-type="1" data-bs-toggle="tooltip" data-bs-placement="top"
-                                    data-bs-title="Pilih lapak bagian atas"
-                                    style="border-radius: 12px; 
-                                           padding: 14px; 
-                                           font-weight: 700; 
-                                           font-size: 1.1rem; 
-                                           background: linear-gradient(135deg, #0d5c3a 0%, #1a7a4f 100%); 
-                                           border: 3px solid #ffd700; 
-                                           transition: all 0.3s ease; 
-                                           box-shadow: 0 6px 15px rgba(13, 92, 58, 0.3);
-                                           color: white;">
-                                    <i class="ri-arrow-up-line"
-                                        style="font-size: 1.3rem; line-height: 1; vertical-align: middle; margin-right: 8px;"></i>
-                                    <span style="line-height: 1; vertical-align: middle;">ATAS</span>
-                                </button>
+                                <div class="flex-fill">
+                                    <button type="button"
+                                        class="btn btn-under btn-confirm-draw btn-draw-modal w-100 d-flex align-items-center justify-content-center"
+                                        data-confirm-draw-type="0"
+                                        style="border-radius: 12px; 
+                                               padding: 14px; 
+                                               font-weight: 700; 
+                                               font-size: 1.1rem; 
+                                               background: linear-gradient(135deg, #0d5c3a 0%, #1a7a4f 100%); 
+                                               border: 3px solid #ffd700; 
+                                               transition: all 0.3s ease; 
+                                               box-shadow: 0 6px 15px rgba(13, 92, 58, 0.3);
+                                               color: white;">
+                                        <i class="ri-arrow-down-line"
+                                            style="font-size: 1.3rem; line-height: 1; vertical-align: middle; margin-right: 8px;"></i>
+                                        <span style="line-height: 1; vertical-align: middle;">TURUN</span>
+                                    </button>
+                                    <div class="text-center mt-2">
+                                        <small class="text-muted preview-under" style="font-size: 0.85rem;">-</small>
+                                    </div>
+                                </div>
+                                <div class="flex-fill">
+                                    <button type="button"
+                                        class="btn btn-upper btn-confirm-draw btn-draw-modal w-100 d-flex align-items-center justify-content-center"
+                                        data-confirm-draw-type="1"
+                                        style="border-radius: 12px; 
+                                               padding: 14px; 
+                                               font-weight: 700; 
+                                               font-size: 1.1rem; 
+                                               background: linear-gradient(135deg, #0d5c3a 0%, #1a7a4f 100%); 
+                                               border: 3px solid #ffd700; 
+                                               transition: all 0.3s ease; 
+                                               box-shadow: 0 6px 15px rgba(13, 92, 58, 0.3);
+                                               color: white;">
+                                        <i class="ri-arrow-up-line"
+                                            style="font-size: 1.3rem; line-height: 1; vertical-align: middle; margin-right: 8px;"></i>
+                                        <span style="line-height: 1; vertical-align: middle;">NAIK</span>
+                                    </button>
+                                    <div class="text-center mt-2">
+                                        <small class="text-muted preview-upper" style="font-size: 0.85rem;">-</small>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="confirm-wrapper-single d-flex justify-content-center w-100">
@@ -1147,6 +1193,59 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Mengerti</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Import Modal --}}
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">Import Data Peserta dari Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('admin.import.participant.groups', $event->id) }}" method="POST"
+                    enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <i class="ri-information-line me-1"></i>
+                            <strong>Format Excel:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Kolom 1: <strong>name</strong> (Nama Grup)</li>
+                                <li>Kolom 2: <strong>total_member</strong> (Jumlah Anggota: 1-5)</li>
+                                <li>Kolom 3: <strong>status</strong> (Opsional)
+                                    <ul class="mt-1">
+                                        <li><strong>BB</strong> = Belum Bayar</li>
+                                        <li><strong>DP</strong> = Down Payment</li>
+                                        <li><strong>L</strong> = Lunas (default)</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="mb-3">
+                            <a href="{{ route('admin.download.template.import') }}"
+                                class="btn btn-sm btn-outline-success">
+                                <i class="ri-download-2-line me-1"></i> Download Template Excel
+                            </a>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="excel_file" class="mb-2">Pilih File Excel</label>
+                            <input type="file" class="form-control" id="excel_file" name="excel_file"
+                                accept=".xlsx,.xls,.csv" required>
+                            <small class="text-muted">Format: .xlsx, .xls, atau .csv (Max: 2MB)</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-info text-white">
+                            <i class="ri-upload-2-line me-1"></i> Import
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1252,14 +1351,14 @@
         /* Alternatif: Sembunyikan scrollbar tapi tetap bisa scroll */
         /* Uncomment jika ingin scrollbar tersembunyi */
         /*
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                .layout-wrap::-webkit-scrollbar {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    display: none;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                .layout-wrap {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    -ms-overflow-style: none;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    scrollbar-width: none;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                .layout-wrap::-webkit-scrollbar {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    display: none;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                .layout-wrap {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    -ms-overflow-style: none;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    scrollbar-width: none;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
 
         /* Fix untuk semua Bootstrap modal */
         .modal.show {
@@ -1298,6 +1397,11 @@
             z-index: 9998 !important;
         }
 
+        /* Import modal z-index */
+        #importModal {
+            z-index: 10000 !important;
+        }
+
         .modal-backdrop.show {
             z-index: 1050 !important;
             opacity: 0.5;
@@ -1316,25 +1420,25 @@
             }
         }
 
-        /* Animation untuk highlight kotak lapak yang baru terisi */
-        @keyframes highlightPulse {
-
-            0%,
-            100% {
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-                transform: scale(1);
-            }
-
-            50% {
-                box-shadow: 0 0 20px 5px rgba(255, 193, 7, 0.8);
-                transform: scale(1.1);
-            }
-        }
-
         /* Hover effects untuk button modal pengundian */
         .btn-draw-modal:hover {
-            transform: translateY(-2px);
+            transform: translateY(-2px) !important;
             box-shadow: 0 6px 15px rgba(45, 106, 79, 0.4) !important;
+        }
+
+        /* Hover effects untuk tombol TURUN dan NAIK */
+        .btn-under:hover:not(:disabled),
+        .btn-upper:hover:not(:disabled) {
+            transform: translateY(-3px) !important;
+            box-shadow: 0 8px 20px rgba(13, 92, 58, 0.5) !important;
+            filter: brightness(1.1) !important;
+        }
+
+        /* Ensure disabled buttons don't have hover effect */
+        .btn-under:disabled,
+        .btn-upper:disabled {
+            cursor: not-allowed !important;
+            opacity: 0.5 !important;
         }
 
         /* Highlight stall when clicked from participant list */
@@ -1347,6 +1451,175 @@
             background-color: #0d6efd !important;
             border-color: #0d6efd !important;
         }
+
+        /* Autocomplete Dropdown Styling */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            max-height: 350px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            margin-top: 8px;
+        }
+
+        .autocomplete-dropdown.show {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 14px 18px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+
+        .autocomplete-item:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .autocomplete-item:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            transform: translateX(4px);
+        }
+
+        .autocomplete-item.active {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        }
+
+        .autocomplete-item .participant-name {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .autocomplete-item .stall-badge {
+            font-size: 0.875rem;
+            margin-left: 10px;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .autocomplete-no-results {
+            padding: 20px;
+            text-align: center;
+            color: #718096;
+            font-style: italic;
+
+            /* Search input focus effect */
+            #searchParticipant:focus {
+                outline: none;
+                box-shadow: 0 0 0 4px rgba(45, 106, 79, 0.2), 0 6px 16px rgba(0, 0, 0, 0.15) !important;
+                transform: translateY(-2px);
+                background: white !important;
+            }
+
+            /* Smooth scrollbar for dropdown */
+            .autocomplete-dropdown::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            .autocomplete-dropdown::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+
+            .autocomplete-dropdown::-webkit-scrollbar-thumb {
+                background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%);
+                border-radius: 10px;
+            }
+
+            .autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
+                background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+            }
+
+            /* Highlight animation for stall and name cards */
+            .highlight-stall,
+            .highlight-name {
+                animation: highlightPulse 0.5s ease-in-out 6 !important;
+                z-index: 100 !important;
+                position: relative !important;
+            }
+
+            /* Force background color change */
+            .highlight-stall.bg-danger,
+            .highlight-stall.bg-warning,
+            .highlight-name.bg-danger,
+            .highlight-name.bg-warning,
+            .highlight-stall.bg-secondary,
+            .highlight-name.bg-secondary {
+                animation: highlightFlashBg 0.5s ease-in-out 6 !important;
+            }
+
+            @keyframes highlightPulse {
+
+                0%,
+                100% {
+                    border-color: white !important;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+                }
+
+                50% {
+                    border-color: #fbbf24 !important;
+                    box-shadow: 0 0 40px 20px rgba(251, 191, 36, 1) !important;
+                }
+            }
+
+            @keyframes highlightFlashBg {
+
+                0%,
+                100% {
+                    background-color: inherit !important;
+                }
+
+                50% {
+                    background-color: #10b981 !important;
+                }
+            }
+
+            /* Checkmark icon for highlighted items */
+            .highlight-stall::after,
+            .highlight-name::after {
+                content: '✓';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 4rem;
+                font-weight: 900;
+                color: #fbbf24;
+                text-shadow: 0 0 20px rgba(0, 0, 0, 1),
+                    0 0 30px rgba(251, 191, 36, 1),
+                    0 0 40px rgba(251, 191, 36, 0.8);
+                z-index: 1000;
+                animation: checkmarkPulse 0.5s ease-in-out 6;
+                pointer-events: none;
+            }
+
+            @keyframes checkmarkPulse {
+
+                0%,
+                100% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.3) rotate(-45deg);
+                }
+
+                50% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1.3) rotate(0deg);
+                }
+            }
     </style>
 @endpush
 
@@ -1719,14 +1992,17 @@
                         if (response.data.canUnder && response.data.under) {
                             $('.btn-under').prop('disabled', false);
                             $('.btn-under').removeClass('opacity-50');
-                            $('.btn-under').attr('data-bs-title', 'Bawah: ' + response.data.under.join(
-                                ', '));
+                            $('.preview-under').text(response.data.under.join(', '));
+                            $('.preview-under').removeClass('text-muted').addClass(
+                                'text-success fw-bold');
                             $('#random-stall-number-under-form-draw').val(JSON.stringify(response.data
                                 .under));
                         } else {
                             $('.btn-under').prop('disabled', true);
                             $('.btn-under').addClass('opacity-50');
-                            $('.btn-under').attr('data-bs-title', 'Tidak tersedia (lapak terisi)');
+                            $('.preview-under').text('Tidak tersedia');
+                            $('.preview-under').removeClass('text-success fw-bold').addClass(
+                                'text-muted');
                             $('#random-stall-number-under-form-draw').val('');
                         }
 
@@ -1734,14 +2010,17 @@
                         if (response.data.canUpper && response.data.upper) {
                             $('.btn-upper').prop('disabled', false);
                             $('.btn-upper').removeClass('opacity-50');
-                            $('.btn-upper').attr('data-bs-title', 'Atas: ' + response.data.upper.join(
-                                ', '));
+                            $('.preview-upper').text(response.data.upper.join(', '));
+                            $('.preview-upper').removeClass('text-muted').addClass(
+                                'text-success fw-bold');
                             $('#random-stall-number-upper-form-draw').val(JSON.stringify(response.data
                                 .upper));
                         } else {
                             $('.btn-upper').prop('disabled', true);
                             $('.btn-upper').addClass('opacity-50');
-                            $('.btn-upper').attr('data-bs-title', 'Tidak tersedia (lapak terisi)');
+                            $('.preview-upper').text('Tidak tersedia');
+                            $('.preview-upper').removeClass('text-success fw-bold').addClass(
+                                'text-muted');
                             $('#random-stall-number-upper-form-draw').val('');
                         }
 
@@ -1752,11 +2031,11 @@
                         if (response.data.canUpper && !response.data.canUnder) {
                             // Tampilkan pesan info
                             let infoMsg =
-                                '<div class="alert alert-info mt-3 mb-0"><i class="ri-information-line me-2"></i>Hanya pilihan <strong>ATAS</strong> yang tersedia</div>';
+                                '<div class="alert alert-info mt-3 mb-0"><i class="ri-information-line me-2"></i>Hanya pilihan <strong>NAIK</strong> yang tersedia</div>';
                             $('.modal-body').append(infoMsg);
                         } else if (!response.data.canUpper && response.data.canUnder) {
                             let infoMsg =
-                                '<div class="alert alert-info mt-3 mb-0"><i class="ri-information-line me-2"></i>Hanya pilihan <strong>BAWAH</strong> yang tersedia</div>';
+                                '<div class="alert alert-info mt-3 mb-0"><i class="ri-information-line me-2"></i>Hanya pilihan <strong>TURUN</strong> yang tersedia</div>';
                             $('.modal-body').append(infoMsg);
                         }
                     } else if (!response.data.isScattered && response.data.total_member === 1) {
@@ -1766,11 +2045,6 @@
 
                     // show form
                     $("#content-wrapper-draw").removeClass("d-none");
-
-                    //init tooltip
-                    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-                    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap
-                        .Tooltip(tooltipTriggerEl))
                 },
 
                 error: function(xhr) {
@@ -1928,6 +2202,15 @@
             if (stallBox.length > 0) {
                 // Remove previous highlights
                 $('.stall-box').removeClass('highlight-stall');
+                $('.participant-name-card').removeClass('highlight-name');
+
+                // Find the corresponding name card
+                // Get the index of the stall in its column
+                let stallIndex = stallBox.parent().children('.stall-box').index(stallBox);
+
+                // Find the name card at the same index
+                let nameCard = stallBox.closest('.left-column, .right-column').find('.participant-name-card').eq(
+                    stallIndex);
 
                 // Get the layout-wrap container
                 let layoutWrap = $('.layout-wrap');
@@ -1955,17 +2238,204 @@
                     scrollTop: targetScroll
                 }, 500, function() {
                     // Add highlight class after scroll
+                    console.log('Adding highlight to stall:', stallNumber);
                     stallBox.addClass('highlight-stall');
+                    console.log('Stall box classes:', stallBox.attr('class'));
+
+                    if (nameCard.length > 0) {
+                        nameCard.addClass('highlight-name');
+                        console.log('Name card classes:', nameCard.attr('class'));
+                    }
+
+                    // JavaScript-based visual overlay (guaranteed to work)
+                    const createOverlay = function(element) {
+                        const overlay = $('<div class="js-highlight-overlay">')
+                            .css({
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: '#10b981',
+                                opacity: 0,
+                                borderRadius: 'inherit',
+                                pointerEvents: 'none',
+                                zIndex: 999
+                            });
+
+                        element.css('position', 'relative').append(overlay);
+                        return overlay;
+                    };
+
+                    const stallOverlay = createOverlay(stallBox);
+                    const nameOverlay = nameCard.length > 0 ? createOverlay(nameCard) : null;
+
+                    // Flash animation (6 times)
+                    let flashCount = 0;
+                    const flashInterval = setInterval(function() {
+                        if (flashCount >= 6) {
+                            clearInterval(flashInterval);
+                            stallOverlay.remove();
+                            if (nameOverlay) nameOverlay.remove();
+                            stallBox.css('borderColor', '');
+                            if (nameCard.length > 0) nameCard.css('borderColor', '');
+                            return;
+                        }
+
+                        // Flash on
+                        stallOverlay.animate({
+                            opacity: 0.9
+                        }, 250);
+                        if (nameOverlay) nameOverlay.animate({
+                            opacity: 0.9
+                        }, 250);
+                        stallBox.css('borderColor', '#fbbf24');
+                        if (nameCard.length > 0) nameCard.css('borderColor', '#fbbf24');
+
+                        // Flash off
+                        setTimeout(function() {
+                            stallOverlay.animate({
+                                opacity: 0
+                            }, 250);
+                            if (nameOverlay) nameOverlay.animate({
+                                opacity: 0
+                            }, 250);
+                            stallBox.css('borderColor', 'white');
+                            if (nameCard.length > 0) nameCard.css('borderColor', 'white');
+                        }, 250);
+
+                        flashCount++;
+                    }, 500);
 
                     // Remove highlight after 3 seconds
                     setTimeout(function() {
+                        console.log('Removing highlight from stall:', stallNumber);
                         stallBox.removeClass('highlight-stall');
+                        nameCard.removeClass('highlight-name');
                     }, 3000);
                 });
             } else {
                 console.log('Stall not found:', stallNumber);
             }
         };
+
+        // ===== AUTOCOMPLETE SEARCH FUNCTIONALITY =====
+        const searchInput = $('#searchParticipant');
+        const autocompleteDropdown = $('#autocompleteDropdown');
+
+        // Get all participants with stall numbers from stall boxes
+        const participantsData = [];
+        $('.stall-box').each(function() {
+            const stallNumber = $(this).data('stall-number');
+            const participantName = $(this).data('participant-name');
+            if (participantName && participantName.trim() !== '') {
+                participantsData.push({
+                    name: participantName,
+                    stallNumber: stallNumber
+                });
+            }
+        });
+
+        console.log('Loaded participants:', participantsData.length);
+
+        // Search input event
+        searchInput.on('input', function() {
+            const searchTerm = $(this).val().toLowerCase().trim();
+
+            if (searchTerm.length === 0) {
+                autocompleteDropdown.removeClass('show').empty();
+                return;
+            }
+
+            // Filter participants
+            const filtered = participantsData.filter(p =>
+                p.name.toLowerCase().includes(searchTerm)
+            );
+
+            // Display results
+            if (filtered.length > 0) {
+                let html = '';
+                filtered.slice(0, 10).forEach(p => { // Limit to 10 results
+                    html += `
+                        <div class="autocomplete-item" data-stall-number="${p.stallNumber}">
+                            <span class="participant-name">${p.name}</span>
+                            <span class="badge bg-success stall-badge">Lapak ${p.stallNumber}</span>
+                        </div>
+                    `;
+                });
+                autocompleteDropdown.html(html).addClass('show');
+            } else {
+                autocompleteDropdown.html('<div class="autocomplete-no-results">Tidak ada hasil</div>').addClass(
+                    'show');
+            }
+        });
+
+        // Click on autocomplete item
+        $(document).on('click', '.autocomplete-item', function() {
+            const stallNumber = $(this).data('stall-number');
+            const participantName = $(this).find('.participant-name').text();
+
+            // Update search input
+            searchInput.val(participantName);
+
+            // Hide dropdown
+            autocompleteDropdown.removeClass('show').empty();
+
+            // Scroll window to bottom first
+            $('html, body').animate({
+                scrollTop: $(document).height()
+            }, 500, function() {
+                // After window scroll, scroll to stall in layout container
+                if (stallNumber) {
+                    scrollToStall(stallNumber);
+                }
+            });
+        });
+
+        // Close dropdown when clicking outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('.search-autocomplete-wrapper').length) {
+                autocompleteDropdown.removeClass('show').empty();
+            }
+        });
+
+        // Keyboard navigation for autocomplete
+        let selectedIndex = -1;
+        searchInput.on('keydown', function(e) {
+            const items = $('.autocomplete-item');
+
+            if (items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                updateSelection(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, 0);
+                updateSelection(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedIndex >= 0 && selectedIndex < items.length) {
+                    items.eq(selectedIndex).click();
+                }
+            } else if (e.key === 'Escape') {
+                autocompleteDropdown.removeClass('show').empty();
+                selectedIndex = -1;
+            }
+        });
+
+        function updateSelection(items) {
+            items.removeClass('active');
+            if (selectedIndex >= 0) {
+                items.eq(selectedIndex).addClass('active');
+            }
+        }
+
+        // Reset selected index when new search
+        searchInput.on('input', function() {
+            selectedIndex = -1;
+        });
 
         // Toggle Phone Number Visibility
         window.togglePhoneNumber = function() {
@@ -2056,6 +2526,55 @@
             document.getElementById('name-error-edit').style.display = 'none';
             $('#editForm button[type="submit"]').prop('disabled', false);
             originalEditName = '';
+        });
+
+        // Move import modal to body to escape container constraints
+        $(document).ready(function() {
+            const importModal = document.getElementById('importModal');
+            if (importModal && importModal.parentElement.tagName !== 'BODY') {
+                console.log('Moving modal to body...');
+                document.body.appendChild(importModal);
+                console.log('Modal moved to body');
+            }
+        });
+
+        // Global function to open import modal
+        window.openImportModal = function() {
+            console.log('Opening import modal...');
+            const modalEl = document.getElementById('importModal');
+            if (modalEl) {
+                console.log('Modal element found');
+
+                // Destroy any existing modal instance
+                const existingModal = bootstrap.Modal.getInstance(modalEl);
+                if (existingModal) {
+                    existingModal.dispose();
+                }
+
+                // Create new modal with explicit options
+                const modal = new bootstrap.Modal(modalEl, {
+                    backdrop: true,
+                    keyboard: true,
+                    focus: true
+                });
+
+                console.log('Showing modal...');
+                modal.show();
+
+                // Debug: Check if modal is shown
+                setTimeout(() => {
+                    console.log('Modal classes:', modalEl.className);
+                    console.log('Modal display:', window.getComputedStyle(modalEl).display);
+                    console.log('Modal parent:', modalEl.parentElement.tagName);
+                }, 100);
+            } else {
+                console.error('Modal element not found!');
+            }
+        };
+
+        // Reset import modal when closed
+        $('#importModal').on('hidden.bs.modal', function() {
+            $('#excel_file').val('');
         });
     </script>
 @endpush

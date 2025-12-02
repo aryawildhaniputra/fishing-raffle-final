@@ -14,6 +14,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\ParticipantGroupsImport;
+use App\Exports\ParticipantGroupsTemplateExport;
 
 class EventController extends Controller
 {
@@ -275,24 +278,13 @@ class EventController extends Controller
                 $canUpper = $this->canSelectUpper($middleNumber, $totalMembers, $availableStalls);
                 $canUnder = $this->canSelectUnder($middleNumber, $totalMembers, $availableStalls);
                 
+                // VALIDASI KETAT: Grup 2-5 anggota HARUS dapat slot berjejer
                 // Nomor tengah valid jika minimal salah satu (UPPER atau UNDER) bisa dipilih
+                // Ini memastikan grup 2-5 PASTI dapat nomor berjejer (consecutive)
+                // Grup 1 anggota tidak perlu validasi ini (bisa slot mana saja)
                 if ($canUpper || $canUnder) {
-                    // FILTER TAMBAHAN: Pastikan nomor bisa menghasilkan slot yang habis dibagi
-                    // Untuk grup dengan jumlah anggota tetap (semua 2, semua 3, dll)
-                    $isValidForGroupSize = $this->isValidMiddleNumberForGroupSize(
-                        $middleNumber, 
-                        $totalMembers, 
-                        $availableStalls,
-                        $canUpper,
-                        $canUnder,
-                        $participantGroup->event_id
-                    );
-                    
-                    if (!$isValidForGroupSize) {
-                        continue; // Skip nomor ini jika tidak sesuai dengan group size pattern
-                    }
-                    
                     // Hitung score berdasarkan sisa slot berjejer terpanjang
+                    // Score lebih tinggi untuk kandidat yang bisa UPPER DAN UNDER (prioritas)
                     $score = $this->calculateSlotScore($middleNumber, $totalMembers, $availableStalls, $canUpper, $canUnder);
                     
                     $validMiddleNumbers[] = [
@@ -304,29 +296,36 @@ class EventController extends Controller
                 }
             }
 
-            // FALLBACK: Jika tidak ada slot berjejer, gunakan scattered slots
+            // FALLBACK: Jika tidak ada slot berjejer
             if (empty($validMiddleNumbers)) {
-                // Coba ambil slot scattered sebagai fallback
-                $scatteredSlots = $this->selectScatteredSlots($availableStalls, $totalMembers);
-                
-                if (empty($scatteredSlots)) {
-                    throw new Error("Tidak ada nomor valid yang bisa diundi");
+                // HANYA grup 1 anggota yang boleh menggunakan scattered slots
+                // Grup 2-5 anggota HARUS mendapat slot berjejer
+                if ($totalMembers == 1) {
+                    // Coba ambil slot scattered sebagai fallback untuk grup 1 anggota
+                    $scatteredSlots = $this->selectScatteredSlots($availableStalls, $totalMembers);
+                    
+                    if (empty($scatteredSlots)) {
+                        throw new Error("Tidak ada nomor valid yang bisa diundi");
+                    }
+                    
+                    // Return scattered slots dengan format khusus
+                    return response()->json([
+                        'data' => [
+                            'participant_group_id' => $participantGroup->id,
+                            'total_member' => $totalMembers,
+                            'middle' => null,
+                            'upper' => null,
+                            'under' => null,
+                            'canUpper' => false,
+                            'canUnder' => false,
+                            'randomStallNumber' => $scatteredSlots,
+                            'isScattered' => true, // Flag untuk frontend
+                        ],
+                    ]);
+                } else {
+                    // Grup 2-5 anggota HARUS berjejer, tidak boleh scattered
+                    throw new Error("Tidak ada slot berjejer yang tersedia untuk grup dengan {$totalMembers} anggota. Mohon atur ulang pengundian atau hubungi administrator.");
                 }
-                
-                // Return scattered slots dengan format khusus
-                return response()->json([
-                    'data' => [
-                        'participant_group_id' => $participantGroup->id,
-                        'total_member' => $totalMembers,
-                        'middle' => null,
-                        'upper' => null,
-                        'under' => null,
-                        'canUpper' => false,
-                        'canUnder' => false,
-                        'randomStallNumber' => $scatteredSlots,
-                        'isScattered' => true, // Flag untuk frontend
-                    ],
-                ]);
             }
 
             // Sort berdasarkan score tertinggi (sisa slot berjejer terpanjang)
@@ -375,10 +374,55 @@ class EventController extends Controller
         $selectedDraw = $topCandidates[array_rand($topCandidates)];
         ========== END OLD LOGIC ========== */
 
-        // NEW LOGIC: FULL RANDOM - Pilih random dari SEMUA kandidat valid
-        // Sistem sudah memastikan slot bergandengan tersedia untuk grup yang belum diundi
-        // melalui scoring system yang memperhitungkan undrawn groups
-        $selectedDraw = $validMiddleNumbers[array_rand($validMiddleNumbers)];
+        // ENHANCED LOGIC: STRATIFIED RANDOM SAMPLING untuk persebaran merata
+        // Bagi kandidat ke dalam strata berdasarkan range angka, lalu pilih dari top 30% tiap strata
+        // Ini memastikan angka tersebar merata (tidak menumpuk di range tertentu)
+        
+        // Tentukan range untuk stratifikasi
+        $maxStalls = Constants::MAX_STALLS;
+        $strataCount = 3; // Bagi jadi 3 strata: low, mid, high
+        $strataSize = $maxStalls / $strataCount;
+        
+        // Kelompokkan kandidat berdasarkan strata
+        $strata = [];
+        for ($i = 0; $i < $strataCount; $i++) {
+            $strata[$i] = [];
+        }
+        
+        foreach ($validMiddleNumbers as $candidate) {
+            $middle = $candidate['middle'];
+            $strataIndex = min((int)($middle / $strataSize), $strataCount - 1);
+            $strata[$strataIndex][] = $candidate;
+        }
+        
+        // Pilih random dari top 30% di SETIAP strata
+        $selectedCandidates = [];
+        foreach ($strata as $stratumCandidates) {
+            if (empty($stratumCandidates)) {
+                continue; // Skip strata kosong
+            }
+            
+            // Sort by score dalam strata ini
+            usort($stratumCandidates, function($a, $b) {
+                return $b['score'] - $a['score'];
+            });
+            
+            // Ambil top 30% dari strata ini
+            $topPercentage = 0.30;
+            $topCount = max(1, (int)(count($stratumCandidates) * $topPercentage));
+            $topInStrata = array_slice($stratumCandidates, 0, $topCount);
+            
+            // Tambahkan ke pool kandidat
+            $selectedCandidates = array_merge($selectedCandidates, $topInStrata);
+        }
+        
+        // Jika tidak ada kandidat (edge case), fallback ke semua kandidat
+        if (empty($selectedCandidates)) {
+            $selectedCandidates = $validMiddleNumbers;
+        }
+        
+        // Random pilih dari pool kandidat yang sudah stratified
+        $selectedDraw = $selectedCandidates[array_rand($selectedCandidates)];
             $middle = $selectedDraw['middle'];
             $canUpper = $selectedDraw['canUpper'];
             $canUnder = $selectedDraw['canUnder'];
@@ -415,6 +459,7 @@ class EventController extends Controller
     /**
      * Hitung score berdasarkan sisa slot berjejer terpanjang
      * Score lebih tinggi = lebih baik (menyisakan slot berjejer lebih panjang)
+     * BONUS BESAR untuk kandidat yang bisa pilih UNDER/UPPER
      */
     private function calculateSlotScore($middleNumber, $totalMembers, $availableStalls, $canUpper, $canUnder)
     {
@@ -448,6 +493,14 @@ class EventController extends Controller
             $longestGapUnder -= $penaltyUnder;
             
             $score = max($score, $longestGapUnder);
+        }
+
+        // BONUS BESAR untuk kandidat yang bisa pilih UNDER/UPPER
+        // Ini memastikan user punya pilihan dan distribusi lebih merata
+        if ($canUpper && $canUnder) {
+            $score += 1000; // BONUS BESAR untuk kedua opsi tersedia
+        } elseif ($canUpper || $canUnder) {
+            $score += 500; // BONUS SEDANG untuk satu opsi tersedia
         }
 
         return $score;
@@ -928,5 +981,102 @@ class EventController extends Controller
             return back()
                 ->with('errors', $th->getMessage());
         }
+    }
+
+    public function importParticipantGroups(Request $request, string $eventId)
+    {
+        $validator = Validator::make($request->all(), [
+            'excel_file' => 'required|file|mimes:xlsx,xls,csv|max:2048',
+        ], [
+            'excel_file.required' => 'File Excel wajib diupload',
+            'excel_file.mimes' => 'File harus berformat Excel (.xlsx, .xls, atau .csv)',
+            'excel_file.max' => 'Ukuran file maksimal 2MB',
+        ]);
+
+        if ($validator->fails()) {
+            return back()
+                ->with('errors', join(', ', $validator->messages()->all()));
+        }
+
+        try {
+            $file = $request->file('excel_file');
+            
+            // Create import instance
+            $import = new ParticipantGroupsImport($eventId);
+            
+            // Import the file
+            Excel::import($import, $file);
+            
+            // Check for errors
+            $errors = $import->getErrors();
+            $failures = $import->failures();
+            
+            if (!empty($errors) || count($failures) > 0) {
+                // Separate errors by type
+                $duplicateNames = [];
+                $quotaErrors = [];
+                $validationErrors = [];
+                
+                foreach ($errors as $error) {
+                    if (strpos($error, 'sudah digunakan') !== false) {
+                        // Extract name from error message
+                        preg_match("/Nama '(.+?)' sudah digunakan/", $error, $matches);
+                        if (isset($matches[1])) {
+                            $duplicateNames[] = $matches[1];
+                        }
+                    } elseif (strpos($error, 'Kuota tidak cukup') !== false) {
+                        $quotaErrors[] = $error;
+                    } else {
+                        $validationErrors[] = $error;
+                    }
+                }
+                
+                // Add validation failures
+                foreach ($failures->all() as $failure) {
+                    $validationErrors[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+                }
+                
+                // Build error message
+                $errorMessage = '';
+                
+                if (!empty($duplicateNames)) {
+                    $errorMessage .= "Nama berikut sudah digunakan:\n";
+                    foreach ($duplicateNames as $name) {
+                        $errorMessage .= "• {$name}\n";
+                    }
+                    $errorMessage .= "\n";
+                }
+                
+                if (!empty($quotaErrors)) {
+                    $errorMessage .= "Masalah kuota:\n";
+                    foreach ($quotaErrors as $error) {
+                        $errorMessage .= "• {$error}\n";
+                    }
+                    $errorMessage .= "\n";
+                }
+                
+                if (!empty($validationErrors)) {
+                    $errorMessage .= "Error validasi:\n";
+                    foreach ($validationErrors as $error) {
+                        $errorMessage .= "• {$error}\n";
+                    }
+                }
+                
+                return back()
+                    ->with('errors', trim($errorMessage));
+            }
+            
+            return redirect()->back()
+                ->with('success', 'Data berhasil diimport dari Excel');
+                
+        } catch (\Throwable $th) {
+            return back()
+                ->with('errors', 'Gagal import data: ' . $th->getMessage());
+        }
+    }
+
+    public function downloadTemplateImport()
+    {
+        return Excel::download(new ParticipantGroupsTemplateExport, 'template_import_peserta.xlsx');
     }
 }

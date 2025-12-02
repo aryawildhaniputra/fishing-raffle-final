@@ -153,7 +153,11 @@
                         <div class="form-group mb-3">
                             <label for="name" class="mb-1">Nama</label>
                             <input value="" required class="form-control" type="text" name="name"
-                                placeholder="Masukkan nama event" />
+                                id="event-name-add" placeholder="Masukkan nama event" />
+                            <div id="duplicate-alert-add" class="alert alert-danger mt-2"
+                                style="display: none; padding: 8px 12px; font-size: 0.875rem;">
+                                <i class="ri-error-warning-line me-1"></i> Nama Event Telah Digunakan
+                            </div>
                         </div>
                         <div class="form-group mb-3">
                             <label for="date" class="mb-1">Tanggal</label>
@@ -163,7 +167,7 @@
                         <div class="form-group mb-3">
                             <label for="price" class="mb-1">Harga</label>
                             <input value="" required class="form-control" type="number" name="price"
-                                placeholder="Masukkan harga tiket" min="0" />
+                                placeholder="Masukkan harga tiket" min="0" max="2147483647" />
                         </div>
                 </div>
                 <div class="modal-footer">
@@ -191,6 +195,10 @@
                             <label for="name" class="mb-1">Nama</label>
                             <input value="" id="name-edit" required class="form-control" type="text"
                                 name="name" placeholder="Masukkan nama event" />
+                            <div id="duplicate-alert-edit" class="alert alert-danger mt-2"
+                                style="display: none; padding: 8px 12px; font-size: 0.875rem;">
+                                <i class="ri-error-warning-line me-1"></i> Nama Event Telah Digunakan
+                            </div>
                         </div>
                         <div class="form-group mb-3">
                             <label for="date" class="mb-1">Tanggal</label>
@@ -200,7 +208,7 @@
                         <div class="form-group mb-3">
                             <label for="price" class="mb-1">Harga</label>
                             <input value="" id="price-edit" required class="form-control" type="number"
-                                name="price" placeholder="Masukkan harga tiket" min="0" />
+                                name="price" placeholder="Masukkan harga tiket" min="0" max="2147483647" />
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -334,6 +342,64 @@
             $('.event-name').html(name);
 
             $('#deleteForm').attr('action', deleteLink);
+        });
+
+        // ========================================
+        // DUPLICATE NAME VALIDATION
+        // ========================================
+
+        // Get all existing event names (from all events, not just current page)
+        const existingEventNames = [];
+        @foreach ($allEventNames as $eventName)
+            existingEventNames.push("{{ strtolower(trim($eventName)) }}");
+        @endforeach
+
+        // Validation for ADD modal
+        $('#event-name-add').on('input', function() {
+            const inputName = $(this).val().toLowerCase().trim();
+            const isDuplicate = existingEventNames.includes(inputName);
+
+            if (isDuplicate && inputName !== '') {
+                $('#duplicate-alert-add').show();
+                $('.btn-submit').prop('disabled', true);
+            } else {
+                $('#duplicate-alert-add').hide();
+                $('.btn-submit').prop('disabled', false);
+            }
+        });
+
+        // Validation for EDIT modal
+        let originalEventName = '';
+
+        // Store original name when edit modal opens
+        $(document).on('click', '.btn-edit', function(event) {
+            originalEventName = $(this).data('name').toLowerCase().trim();
+        });
+
+        $('#name-edit').on('input', function() {
+            const inputName = $(this).val().toLowerCase().trim();
+            const isDuplicate = existingEventNames.includes(inputName);
+
+            // Allow if it's the same as original name (no change)
+            if (isDuplicate && inputName !== originalEventName && inputName !== '') {
+                $('#duplicate-alert-edit').show();
+                $('.btn-submit').prop('disabled', true);
+            } else {
+                $('#duplicate-alert-edit').hide();
+                $('.btn-submit').prop('disabled', false);
+            }
+        });
+
+        // Reset validation when modals are closed
+        $('#addNewModal').on('hidden.bs.modal', function() {
+            $('#event-name-add').val('');
+            $('#duplicate-alert-add').hide();
+            $('.btn-submit').prop('disabled', false);
+        });
+
+        $('#editModal').on('hidden.bs.modal', function() {
+            $('#duplicate-alert-edit').hide();
+            $('.btn-submit').prop('disabled', false);
         });
 
         // ========================================
