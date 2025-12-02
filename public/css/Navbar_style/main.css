@@ -1,0 +1,263 @@
+.navbar::before,
+.navbar::after,
+.navbar .container-lg::before,
+.navbar .container-lg::after,
+.navbar-brand-wrapper::before,
+.navbar-brand-wrapper::after,
+.navbar .dropdown::before,
+.navbar .dropdown::after,
+.navbar::after,
+.navbar::before,
+.navbar .extra-star {
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.navbar .extra-star {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.08);
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.2));
+  z-index: 0;
+}
+
+.navbar .extra-star.star-1 {
+  width: 60px;
+  height: 60px;
+  top: 10px;
+  left: 5%;
+  opacity: 0.35;
+}
+
+.navbar .extra-star.star-2 {
+  width: 70px;
+  height: 70px;
+  top: 55px;
+  left: 35%;
+  opacity: 0.3;
+}
+
+.navbar .extra-star.star-3 {
+  width: 55px;
+  height: 55px;
+  top: -20px;
+  right: 35%;
+  opacity: 0.25;
+}
+
+.navbar .extra-star.star-4 {
+  width: 65px;
+  height: 65px;
+  top: 25px;
+  right: 5%;
+  opacity: 0.4;
+}
+
+.navbar .extra-star.star-5 {
+  width: 45px;
+  height: 45px;
+  bottom: -25px;
+  left: 15%;
+  opacity: 0.3;
+}
+
+.navbar .extra-star.star-6 {
+  width: 50px;
+  height: 50px;
+  bottom: 5px;
+  left: 40%;
+  opacity: 0.25;
+}
+
+.navbar .extra-star.star-7 {
+  width: 60px;
+  height: 60px;
+  bottom: -15px;
+  right: 25%;
+  opacity: 0.35;
+}
+
+.navbar .extra-star.star-8 {
+  width: 40px;
+  height: 40px;
+  bottom: 10px;
+  right: 45%;
+  opacity: 0.2;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@100;300;400;500;600;700;900&display=swap");
+
+:root {
+  --dark-green: #03150c;
+  --forest-green: #0a2e18;
+  --mid-green: #0f4e23;
+  --highlight-green: #1fb954;
+  --gold: #f5c12c;
+}
+
+.navbar p,
+.navbar span {
+  color: var(--gold);
+}
+
+.navbar {
+  position: relative;
+  overflow: visible;
+  background: linear-gradient(225deg, var(--dark-green) 0%, var(--forest-green) 55%, var(--highlight-green) 100%);
+  padding: 12px;
+  border-bottom: 2px solid rgba(245, 193, 44, 0.4);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+}
+
+.navbar>*,
+.navbar .container-lg,
+.navbar .dropdown {
+  position: relative;
+  z-index: 1;
+}
+
+.navbar::before,
+.navbar::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.5;
+  background: rgba(255, 255, 255, 0.15);
+  filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.2));
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.navbar::before {
+  width: 160px;
+  height: 160px;
+  top: -60px;
+  right: -40px;
+}
+
+.navbar::after {
+  width: 110px;
+  height: 110px;
+  bottom: -45px;
+  left: 20%;
+  opacity: 0.35;
+}
+
+.navbar .container-lg::before,
+.navbar .container-lg::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.45;
+  background: rgba(255, 255, 255, 0.12);
+  filter: drop-shadow(0 0 12px rgba(0, 0, 0, 0.15));
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  z-index: 0;
+}
+
+.navbar .container-lg::before {
+  width: 90px;
+  height: 90px;
+  top: 15px;
+  left: 25%;
+}
+
+.navbar .container-lg::after {
+  width: 70px;
+  height: 70px;
+  top: 35px;
+  right: 22%;
+  opacity: 0.3;
+}
+
+.navbar-brand-wrapper,
+.navbar .dropdown {
+  position: relative;
+  z-index: 1;
+}
+
+.navbar-brand-wrapper::before,
+.navbar-brand-wrapper::after,
+.navbar .dropdown::before,
+.navbar .dropdown::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.4;
+  background: rgba(255, 255, 255, 0.1);
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.2));
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.navbar-brand-wrapper::before {
+  width: 80px;
+  height: 80px;
+  top: -25px;
+  left: -40px;
+}
+
+.navbar-brand-wrapper::after {
+  width: 60px;
+  height: 60px;
+  bottom: -20px;
+  left: 30px;
+  opacity: 0.25;
+}
+
+.navbar .dropdown::before {
+  width: 85px;
+  height: 85px;
+  top: -10px;
+  right: -20px;
+  opacity: 0.35;
+}
+
+.navbar .dropdown::after {
+  width: 55px;
+  height: 55px;
+  bottom: -30px;
+  right: 10px;
+  opacity: 0.2;
+}
+
+.navbar .text-hero {
+  font-size: 20px;
+}
+
+.navbar .dropdown-menu {
+  background-color: var(--forest-green);
+  border: 1px solid rgba(245, 193, 44, 0.2);
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 2;
+}
+
+.navbar .dropdown-item {
+  color: #fff;
+}
+
+.navbar .dropdown-item:hover {
+  background-color: var(--gold);
+  color: var(--dark-green);
+}
+
+.navbar .img-avatar {
+  height: 50px;
+  width: 50px;
+  border-radius: 100px;
+  -o-object-fit: cover;
+  object-fit: cover;
+}
+
+.navbar .logo-img-wrapper {
+  width: 220px;
+}
+
+.navbar .logo-img-wrapper img {
+  width: 100%;
+}
+
+.navbar-logo {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+}

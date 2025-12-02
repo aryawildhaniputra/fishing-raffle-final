@@ -1,0 +1,18 @@
+{
+    "name": "fishing-raffle",
+    "version": "1.0.0",
+    "description": "Fishing Raffle Lottery System",
+    "scripts": {
+        "cypress:open": "cypress open",
+        "cypress:run": "cypress run",
+        "test:event1": "cypress run --spec 'cypress/e2e/event1-group-2.cy.js'",
+        "test:event2": "cypress run --spec 'cypress/e2e/event2-group-3.cy.js'",
+        "test:event3": "cypress run --spec 'cypress/e2e/event3-mixed-groups.cy.js'",
+        "test:event4": "cypress run --spec 'cypress/e2e/event4-random-1.cy.js'",
+        "test:event5": "cypress run --spec 'cypress/e2e/event5-random-2.cy.js'",
+        "test:all": "cypress run"
+    },
+    "devDependencies": {
+        "cypress": "^13.17.0"
+    }
+}

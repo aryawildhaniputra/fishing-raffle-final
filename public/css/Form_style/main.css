@@ -1,0 +1,118 @@
+@import url("https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@100;300;400;500;600;700;900&display=swap");
+
+body {
+  font-family: "Poppins", sans-serif;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+  background-color: #f5f5f5;
+  height: 100dvh;
+  overflow: auto;
+}
+
+body p {
+  color: #2d4059;
+}
+
+body .ls-b {
+  letter-spacing: -1px;
+}
+
+body .ls-s {
+  letter-spacing: -0.5px;
+}
+
+body .content-wrapper .breadcrumbs-box {
+  border-bottom: 0.5px solid #8d8d8d;
+}
+
+body .content-wrapper .breadcrumbs-box .page-title {
+  font-size: 20px;
+  letter-spacing: -1px;
+}
+
+@media (max-width: 991.98px) {
+  body .content-wrapper .breadcrumbs-box .page-title {
+    font-size: 16px;
+    letter-spacing: -1px;
+  }
+}
+
+body .content-wrapper .breadcrumbs-box .breadcrumb-item {
+  font-size: 14px;
+  letter-spacing: -0.5px;
+  color: #111;
+}
+
+body .content-wrapper .breadcrumbs-box .breadcrumb-item a:hover {
+  text-decoration: underline !important;
+  color: #000;
+}
+
+body .content-wrapper .breadcrumbs-box .breadcrumb-item a {
+  color: #111;
+}
+
+body .content-wrapper .breadcrumbs-box .breadcrumb-item.active {
+  color: #000;
+}
+
+body .content-wrapper .drop-area {
+  padding: 12px;
+  background: white;
+  text-align: center;
+  border-radius: 20px;
+}
+
+body .content-wrapper .drop-area .default-view .upload-icon {
+  font-size: 36px;
+}
+
+body .content-wrapper .drop-area .default-view .file-desc {
+  letter-spacing: -0.5px;
+  color: #2d4059;
+}
+
+@media (max-width: 991.98px) {
+  body .content-wrapper .drop-area .default-view .file-desc {
+    font-size: 14px;
+  }
+}
+
+body .content-wrapper .drop-area.active .default-view .file-desc {
+  color: blue;
+}
+
+body .content-wrapper .drop-area.active .img-view {
+  border-color: blue;
+}
+
+body .content-wrapper .drop-area .img-view {
+  border-color: gray;
+  border: 2px dashed grey;
+}
+
+body .content-wrapper .drop-area.active .default-view .img-view {
+  border-color: blue;
+}
+
+body .content-wrapper .drop-area.active .default-view .upload-icon {
+  color: blue;
+}
+
+@media (max-width: 991.98px) {
+  body .content-wrapper .drop-area .default-view .upload-icon {
+    font-size: 30px;
+  }
+}
+
+body .content-wrapper .form-label {
+  letter-spacing: -0.5px;
+}
+
+@media (max-width: 991.98px) {
+  body .content-wrapper .form-label {
+    font-size: 14px;
+  }
+}
+
+/*# sourceMappingURL=main.css.map */
