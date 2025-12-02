@@ -1252,14 +1252,14 @@
         /* Alternatif: Sembunyikan scrollbar tapi tetap bisa scroll */
         /* Uncomment jika ingin scrollbar tersembunyi */
         /*
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        .layout-wrap::-webkit-scrollbar {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            display: none;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        .layout-wrap {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            -ms-overflow-style: none;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            scrollbar-width: none;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            .layout-wrap::-webkit-scrollbar {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                display: none;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            .layout-wrap {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                -ms-overflow-style: none;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                scrollbar-width: none;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            */
 
         /* Fix untuk semua Bootstrap modal */
         .modal.show {
@@ -1493,7 +1493,7 @@
                         orientation: 'landscape',
                         pageSize: 'A4',
                         exportOptions: {
-                            columns: [0, 1, 2, 3, 4, 6, 7]
+                            columns: [0, 1, 2, 3, 4, 5] // Exclude Aksi column (index 6)
                         },
                         customize: function(doc) {
                             // Styling untuk title
@@ -1503,10 +1503,8 @@
                             doc.content[0].bold = true;
                             doc.content[0].margin = [0, 0, 0, 20];
 
-                            // Styling untuk tabel
-                            doc.content[1].table.widths = ['5%', '20%', '15%', '10%', '15%', '15%',
-                                '20%'
-                            ];
+                            // Styling untuk tabel - 6 kolom
+                            doc.content[1].table.widths = ['8%', '25%', '18%', '12%', '18%', '19%'];
 
                             // Styling untuk header tabel
                             doc.content[1].table.body[0].forEach(function(cell) {
@@ -1529,7 +1527,8 @@
                                 doc.content[1].table.body[i][0].alignment = 'center'; // No
                                 doc.content[1].table.body[i][3].alignment = 'center'; // Anggota
                                 doc.content[1].table.body[i][4].alignment = 'center'; // Status
-                                doc.content[1].table.body[i][5].alignment = 'center'; // Tanggal
+                                doc.content[1].table.body[i][5].alignment =
+                                'center'; // Status Pengundian
                             }
 
                             // Margin dan layout
@@ -1543,7 +1542,7 @@
                         filename: exportFileName,
                         title: exportFileName,
                         exportOptions: {
-                            columns: [0, 1, 2, 3, 4, 6, 7]
+                            columns: [0, 1, 2, 3, 4, 5] // Exclude Aksi column (index 6)
                         }
                     }
                 ]
