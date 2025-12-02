@@ -37,14 +37,7 @@ describe('Event 6: Scattered Slot Allocation Test', () => {
     cy.get('#addNewModal input[name="event_date"]').type('2025-12-31')
     cy.get('#addNewModal input[name="price"]').type('50000')
     cy.get('#addNewModal button[type="submit"]').contains('Simpan').click()
-    
-    // Wait for success alert and click OK if it appears
-    cy.wait(1000)
-    cy.get('body').then($body => {
-      if ($body.find('.swal2-confirm').length > 0) {
-        cy.get('.swal2-confirm').click() // Click OK on SweetAlert
-      }
-    })
+
     
     // Wait for form submission and page reload
     cy.wait(2000)
@@ -63,14 +56,7 @@ describe('Event 6: Scattered Slot Allocation Test', () => {
     cy.get('#addNewModal input[name="total_member"]').clear().type(group1Size.toString())
     cy.get('#addNewModal select[name="status"]').select('paid')
     cy.get('#addNewModal button[type="submit"]').contains('Simpan').click()
-    
-    // Handle success alert
-    cy.wait(1000)
-    cy.get('body').then($body => {
-      if ($body.find('.swal2-confirm').length > 0) {
-        cy.get('.swal2-confirm').click()
-      }
-    })
+
     cy.wait(500)
     
     // Add Group 2
@@ -83,14 +69,7 @@ describe('Event 6: Scattered Slot Allocation Test', () => {
     cy.get('#addNewModal input[name="total_member"]').clear().type(group2Size.toString())
     cy.get('#addNewModal select[name="status"]').select('paid')
     cy.get('#addNewModal button[type="submit"]').contains('Simpan').click()
-    
-    // Handle success alert
-    cy.wait(1000)
-    cy.get('body').then($body => {
-      if ($body.find('.swal2-confirm').length > 0) {
-        cy.get('.swal2-confirm').click()
-      }
-    })
+
     cy.wait(500)
     
     // Add Group 3
@@ -103,14 +82,7 @@ describe('Event 6: Scattered Slot Allocation Test', () => {
     cy.get('#addNewModal input[name="total_member"]').clear().type(group3Size.toString())
     cy.get('#addNewModal select[name="status"]').select('paid')
     cy.get('#addNewModal button[type="submit"]').contains('Simpan').click()
-    
-    // Handle success alert
-    cy.wait(1000)
-    cy.get('body').then($body => {
-      if ($body.find('.swal2-confirm').length > 0) {
-        cy.get('.swal2-confirm').click()
-      }
-    })
+
     cy.wait(500)
     
     // Now fill slots to create gaps that force scattered allocation

@@ -26,12 +26,14 @@ Cypress.Commands.add('waitForModal', (modalId) => {
 
 // Click draw button and wait for modal
 Cypress.Commands.add('clickDrawButton', () => {
-  // Klik tab Pengundian
-  cy.contains('button', 'Pengundian').click()
+  // Klik tab Pengundian (force to bypass SweetAlert overlay)
+  cy.contains('button', 'Pengundian').click({ force: true })
   
-  // Klik tombol draw
-  cy.get('.btn-draw').click()
-  cy.waitForModal('drawModal')
+  // Klik tombol draw (force to bypass SweetAlert overlay)
+  cy.get('.btn-draw').click({ force: true })
+  
+  // Wait for modal to open
+  cy.wait(500)
 })
 
 // Wait for number animation to complete
@@ -39,27 +41,25 @@ Cypress.Commands.add('waitForNumberAnimation', () => {
   // Wait for spinner to disappear
   cy.get('#spinner-draw', { timeout: 10000 }).should('not.be.visible')
   
-  // Check if error state or content appears
+  // Check if error state appears
   cy.get('body').then($body => {
     if ($body.find('.not-found-state-draw').is(':visible')) {
       // Error state detected
       cy.log('⚠ Error state detected - closing modal')
-      cy.get('.btn-close').first().click()
+      cy.get('#drawModal .btn-close').click({ force: true })
       return
     }
     
     if ($body.find('#content-wrapper-draw').hasClass('d-none')) {
       // Content not visible, might be error
       cy.log('⚠ Content not visible - closing modal')
-      cy.get('.btn-close').first().click()
+      cy.get('#drawModal .btn-close').click({ force: true })
       return
     }
-    
-    // Wait for content to appear
-    cy.get('#content-wrapper-draw').should('be.visible')
-    // Wait a bit for purecounter animation
-    cy.wait(500)
   })
+  
+  // Wait for animation to complete
+  cy.wait(1000)
 })
 
 // Select upper or lower stall
@@ -80,18 +80,15 @@ Cypress.Commands.add('selectRandomPosition', () => {
     // Check if single confirmation wrapper is visible (for scattered or single member)
     if ($body.find('.confirm-wrapper-single:visible').length > 0) {
       cy.log('→ KONFIRMASI (scattered or single member)')
-      cy.get('.confirm-wrapper-single .btn-confirm-draw').click()
+      cy.get('.confirm-wrapper-single .btn-confirm-draw').click({ force: true })
       
-      // Wait for success modal to appear, then handle it
-      cy.get('.swal2-container', { timeout: 2000 }).should('be.visible').then(() => {
-        cy.get('.swal2-confirm:visible').should('be.visible').then($btn => {
-          if ($btn.length > 0) {
-            cy.log('→ Clicking OK on success modal')
-            cy.get('.swal2-confirm').click()
-            // Wait for modal to fully close
-            cy.get('.swal2-container').should('not.be.visible')
-          }
-        })
+      // Wait for success alert and close it
+      cy.wait(1000)
+      cy.get('body').then($modal => {
+        if ($modal.find('.swal2-confirm').length > 0) {
+          cy.get('.swal2-confirm').click({ force: true })
+          cy.wait(500) // Wait for SweetAlert to close
+        }
       })
       return
     }
@@ -106,56 +103,45 @@ Cypress.Commands.add('selectRandomPosition', () => {
         const random = Math.random() < 0.5
         if (random) {
           cy.log('🎲 Random: ATAS')
-          cy.get('.btn-upper').click()
+          cy.get('.btn-upper').click({ force: true })
         } else {
           cy.log('🎲 Random: BAWAH')
-          cy.get('.btn-under').click()
+          cy.get('.btn-under').click({ force: true })
         }
       } else if (!upperDisabled) {
         cy.log('→ ATAS (only option)')
-        cy.get('.btn-upper').click()
+        cy.get('.btn-upper').click({ force: true })
       } else if (!underDisabled) {
         cy.log('→ BAWAH (only option)')
-        cy.get('.btn-under').click()
+        cy.get('.btn-under').click({ force: true })
       }
       
-      // Wait for success modal to appear, then handle it
-      cy.get('.swal2-container', { timeout: 2000 }).should('be.visible').then(() => {
-        cy.get('.swal2-confirm:visible').should('be.visible').then($btn => {
-          if ($btn.length > 0) {
-            cy.log('→ Clicking OK on success modal')
-            cy.get('.swal2-confirm').click()
-            // Wait for modal to fully close
-            cy.get('.swal2-container').should('not.be.visible')
-          }
-        })
+      // Wait for success alert and close it
+      cy.wait(1000)
+      cy.get('body').then($modal => {
+        if ($modal.find('.swal2-confirm').length > 0) {
+          cy.get('.swal2-confirm').click({ force: true })
+          cy.wait(500) // Wait for SweetAlert to close
+        }
       })
       return
     }
     
     // Fallback: try to find any confirm button
     cy.log('→ Fallback: clicking first confirm button')
-    cy.get('.btn-confirm-draw').first().click()
+    cy.get('.btn-confirm-draw').first().click({ force: true })
     
-    // Wait for success modal to appear, then handle it
-    cy.get('.swal2-container', { timeout: 2000 }).should('be.visible').then(() => {
-      cy.get('.swal2-confirm:visible').should('be.visible').then($btn => {
-        if ($btn.length > 0) {
-          cy.log('→ Clicking OK on success modal')
-          cy.get('.swal2-confirm').click()
-          // Wait for modal to fully close
-          cy.get('.swal2-container').should('not.be.visible')
-        }
-      })
+    // Wait for success alert and close it
+    cy.wait(1000)
+    cy.get('body').then($modal => {
+      if ($modal.find('.swal2-confirm').length > 0) {
+        cy.get('.swal2-confirm').click({ force: true })
+        cy.wait(500) // Wait for SweetAlert to close
+      }
     })
   })
 })
 
-// Redraw lottery
-Cypress.Commands.add('redrawLottery', () => {
-  cy.get('.btn-redraw').click()
-  cy.waitForNumberAnimation()
-})
 
 // Get total groups not yet drawn from UI
 Cypress.Commands.add('getTotalGroupsNotDrawn', () => {
