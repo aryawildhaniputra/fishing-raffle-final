@@ -32,7 +32,7 @@ class EventController extends Controller
             ])
             ->values();
 
-        $groups_drawn = $groupCollect->where("raffle_status", "completed")->sortBy(["created_at", "asc"])->values();
+        $groups_drawn = $groupCollect->where("raffle_status", "completed")->sortByDesc("updated_at")->values();
 
         $eventParticipants = Participant::where('event_id', $event->id)->orderBy('stall_number', 'asc')->get();
 

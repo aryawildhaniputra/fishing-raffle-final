@@ -339,6 +339,119 @@
                             </div>
                         </div>
                     @endif
+
+                    {{-- Card Informasi Pengundian Terakhir --}}
+                    @if ($groups_drawn->count() > 0)
+                        @php
+                            // Ambil data pengundian terakhir (yang paling baru)
+                            // Collection sudah diurutkan descending berdasarkan updated_at di controller
+                            // Jadi first() akan mengambil data yang paling baru diundi
+                            $lastDrawn = $groups_drawn->first();
+                            $lastDrawnStallNumbers =
+                                isset($lastDrawn['participants']) && count($lastDrawn['participants']) > 0
+                                    ? collect($lastDrawn['participants'])->pluck('stall_number')->sort()->values()
+                                    : collect();
+                        @endphp
+
+                        <div class="mb-4 p-4 position-relative overflow-hidden"
+                            style="border-radius: 20px; 
+                                   border: none; 
+                                   background: linear-gradient(135deg, #0d5c3a 0%, #1a7a4f 50%, #0d5c3a 100%);
+                                   box-shadow: 0 10px 30px rgba(13, 92, 58, 0.3);">
+
+                            {{-- Background Stars --}}
+                            <div class="position-absolute w-100 h-100 top-0 start-0"
+                                style="opacity: 0.1; pointer-events: none;">
+                                <div style="position: absolute; top: 20%; left: 15%; font-size: 16px;">⭐</div>
+                                <div style="position: absolute; top: 60%; right: 20%; font-size: 14px;">✨</div>
+                                <div style="position: absolute; bottom: 25%; left: 25%; font-size: 15px;">⭐</div>
+                            </div>
+
+                            <div class="position-relative">
+                                {{-- Header --}}
+                                <div class="d-flex align-items-center mb-3 pb-2 border-bottom border-white"
+                                    style="border-opacity: 0.2 !important;">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center me-3"
+                                        style="width: 45px; height: 45px; background: rgba(255, 255, 255, 0.2);">
+                                        <i class="ri-trophy-line text-white" style="font-size: 22px;"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-white fw-bold mb-0" style="font-size: 1rem;">Pengundian Terakhir
+                                        </h6>
+                                        <small class="text-white" style="opacity: 0.8;">Peserta yang baru saja
+                                            diundi</small>
+                                    </div>
+                                </div>
+
+                                {{-- Content --}}
+                                <div class="row g-3">
+                                    {{-- Nama Peserta --}}
+                                    <div class="col-md-4">
+                                        <div class="d-flex flex-column">
+                                            <small class="text-white mb-1" style="opacity: 0.8;">
+                                                <i class="ri-user-3-line me-1"></i>
+                                                Nama Peserta
+                                            </small>
+                                            <span class="text-white fw-bold" style="font-size: 1.1rem;">
+                                                {{ $lastDrawn['name'] }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Jumlah Anggota --}}
+                                    <div class="col-md-4">
+                                        <div class="d-flex flex-column">
+                                            <small class="text-white mb-1" style="opacity: 0.8;">
+                                                <i class="ri-group-line me-1"></i>
+                                                Jumlah Anggota
+                                            </small>
+                                            <span class="badge d-inline-flex align-items-center"
+                                                style="background: rgba(255, 255, 255, 0.25); 
+                                                       color: white;
+                                                       font-size: 1rem; 
+                                                       padding: 0.5rem 1rem; 
+                                                       width: fit-content;
+                                                       border-radius: 10px;
+                                                       border: 2px solid rgba(255, 255, 255, 0.3);">
+                                                <i class="ri-team-line me-2"></i>
+                                                {{ $lastDrawn['total_member'] }} Orang
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Nomor Undian --}}
+                                    <div class="col-md-4">
+                                        <div class="d-flex flex-column">
+                                            <small class="text-white mb-1" style="opacity: 0.8;">
+                                                <i class="ri-ticket-line me-1"></i>
+                                                Nomor Lapak
+                                            </small>
+                                            @if ($lastDrawnStallNumbers->count() > 0)
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    @foreach ($lastDrawnStallNumbers as $stallNumber)
+                                                        <span class="badge"
+                                                            style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+                                                                   color: #0d5c3a;
+                                                                   font-size: 1rem;
+                                                                   font-weight: 700;
+                                                                   padding: 0.5rem 0.9rem;
+                                                                   border-radius: 8px;
+                                                                   border: 2px solid #ffd700;
+                                                                   box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);">
+                                                            {{ $stallNumber }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <span class="text-white" style="opacity: 0.6;">-</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="table-wrapper">
                         <div class="wrapper fs-6 mb-2 fw-semibold">Urutan Pengundian</div>
                         <div class="wrapper mt-2 mt-lg-0 mb-2">
@@ -447,7 +560,7 @@
                             <tbody>
                                 @foreach ($groups_drawn as $group)
                                     <tr>
-                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $groups_drawn->count() - $loop->index }}</td>
                                         <td>{{ $group['name'] }}</td>
                                         <td>{{ $group['phone_num'] }}</td>
                                         <td>{{ $group['total_member'] }}</td>
@@ -1139,14 +1252,14 @@
         /* Alternatif: Sembunyikan scrollbar tapi tetap bisa scroll */
         /* Uncomment jika ingin scrollbar tersembunyi */
         /*
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                .layout-wrap::-webkit-scrollbar {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    display: none;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                .layout-wrap {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    -ms-overflow-style: none;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    scrollbar-width: none;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        .layout-wrap::-webkit-scrollbar {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            display: none;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        .layout-wrap {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            -ms-overflow-style: none;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            scrollbar-width: none;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        */
 
         /* Fix untuk semua Bootstrap modal */
         .modal.show {
@@ -1268,6 +1381,21 @@
                     localStorage.setItem('activeEventTab', targetTab);
                 });
             });
+
+            // ===== RESTORE SCROLL POSITION AFTER DRAW =====
+            // Restore scroll position setelah submit draw form
+            const savedScrollPosition = sessionStorage.getItem('scrollPosition');
+            if (savedScrollPosition) {
+                // Delay untuk memastikan DOM fully loaded
+                setTimeout(function() {
+                    window.scrollTo({
+                        top: parseInt(savedScrollPosition),
+                        behavior: 'smooth'
+                    });
+                    // Clear saved position setelah restore
+                    sessionStorage.removeItem('scrollPosition');
+                }, 300);
+            }
 
             // Auto scroll ke kotak lapak yang baru terisi (jika user ada di tab Layout Lapak)
             @if (session('drawnStallNumbers'))
@@ -1690,6 +1818,9 @@
             // Verify final value
             let setValue = $('#random-stall-number-type-form-draw').val();
             console.log('Field value after setting:', setValue);
+
+            // Save scroll position before submit
+            sessionStorage.setItem('scrollPosition', window.pageYOffset || document.documentElement.scrollTop);
 
             // Disable buttons
             $('.btn-draw-modal').prop('disabled', true);
