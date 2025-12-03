@@ -29,9 +29,8 @@ class EventController extends Controller
             ->whereIn("status", ["dp", "paid"])
             ->where("raffle_status", "not_yet")
             ->sortBy([
-                ['total_member', 'asc'],
-                ['status', 'desc'],
-                ['created_at', 'desc'],
+                ['total_member', 'desc'],   // Terbesar dulu (5, 4, 3, 2, 1)
+                ['id', 'asc'],              // ID terkecil dulu (yang daftar lebih dulu)
             ])
             ->values();
 
