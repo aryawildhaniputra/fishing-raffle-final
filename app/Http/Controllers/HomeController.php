@@ -184,17 +184,20 @@ class HomeController extends Controller
     public function updateProfile(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'name' => 'nullable|string|max:255',
+            'username' => 'nullable|string|max:255|unique:users,username,' . Auth::id(),
             'old_password' => 'nullable',
             'new_password' => 'nullable|min:6',
             'confirm_password' => 'required_with:new_password|same:new_password',
         ], [
+            'username.unique' => 'Username sudah digunakan',
             'new_password.min' => 'Password minimal harus :min karakter',
             'confirm_password.same' => 'Pengulangan Password Tidak Sama',
         ]);
 
         if ($validator->fails()) {
             return back()
-                ->with('errors', join(', ', $validator->messages()->all()))
+                ->with('error', join(', ', $validator->messages()->all()))
                 ->withInput();
         }
 
@@ -207,6 +210,17 @@ class HomeController extends Controller
 
             $newData = collection::make();
 
+            // Update name if provided
+            if (isset($reqData['name']) && !empty($reqData['name'])) {
+                $newData->put('name', $reqData['name']);
+            }
+
+            // Update username if provided
+            if (isset($reqData['username']) && !empty($reqData['username'])) {
+                $newData->put('username', $reqData['username']);
+            }
+
+            // Update password if provided
             if (isset($reqData['old_password']) && isset($reqData['new_password'])) {
                 if (!(Hash::check($reqData['old_password'], $oldData->password))) {
                     throw new Exception('Password Lama Tidak Valid');
@@ -215,12 +229,17 @@ class HomeController extends Controller
                 }
             }
 
+            // Check if there's any data to update
+            if ($newData->isEmpty()) {
+                return back()->with('info', 'Tidak ada perubahan data');
+            }
+
             $oldData->update($newData->toArray());
 
-            return redirect()->route('admin.home');
+            return back()->with('success', 'Profil berhasil diperbarui!');
         } catch (\Throwable $th) {
             return back()
-                ->with('errors', 'Gagal Menghapus Data Event');
+                ->with('error', $th->getMessage());
         }
     }
 }

@@ -273,6 +273,7 @@ class EventController extends Controller
 
             // Cari nomor tengah yang valid dengan scoring
             $validMiddleNumbers = [];
+            $skippedByEdgeOnly = []; // Track kandidat yang di-skip karena edge-only
             
             foreach ($availableStalls as $middleNumber) {
                 $canUpper = $this->canSelectUpper($middleNumber, $totalMembers, $availableStalls);
@@ -283,6 +284,39 @@ class EventController extends Controller
                 // Ini memastikan grup 2-5 PASTI dapat nomor berjejer (consecutive)
                 // Grup 1 anggota tidak perlu validasi ini (bisa slot mana saja)
                 if ($canUpper || $canUnder) {
+                    // EDGE-ONLY SELECTION untuk grup 2-3 anggota
+                    // Jika grup 2-3 dan ada consecutive range == 4 atau == 6, hanya pilih edge (ujung)
+                    $passedEdgeOnly = true;
+                    if ($totalMembers == 2 || $totalMembers == 3) {
+                        $isEdgeCandidate = $this->isEdgeCandidate($middleNumber, $availableStalls, $canUpper, $canUnder);
+                        if (!$isEdgeCandidate) {
+                            $passedEdgeOnly = false;
+                            // Simpan untuk fallback
+                            $skippedByEdgeOnly[] = [
+                                'middle' => $middleNumber,
+                                'canUpper' => $canUpper,
+                                'canUnder' => $canUnder,
+                            ];
+                            continue; // Skip kandidat non-edge untuk grup 2-3
+                        }
+                    }
+                    
+                    // VALIDASI LOOKAHEAD: Pastikan pilihan ini menyisakan slot berjejer untuk grup lain
+                    // Simulasi jika kandidat ini dipilih, apakah sisa slot cukup untuk grup yang belum diundi?
+                    $passesLookahead = $this->validateLookahead(
+                        $middleNumber, 
+                        $totalMembers, 
+                        $availableStalls, 
+                        $canUpper, 
+                        $canUnder,
+                        $participantGroup->event_id
+                    );
+                    
+                    // Skip kandidat yang tidak lolos validasi lookahead
+                    if (!$passesLookahead) {
+                        continue;
+                    }
+                    
                     // Hitung score berdasarkan sisa slot berjejer terpanjang
                     // Score lebih tinggi untuk kandidat yang bisa UPPER DAN UNDER (prioritas)
                     $score = $this->calculateSlotScore($middleNumber, $totalMembers, $availableStalls, $canUpper, $canUnder);
@@ -291,6 +325,60 @@ class EventController extends Controller
                         'middle' => $middleNumber,
                         'canUpper' => $canUpper,
                         'canUnder' => $canUnder,
+                        'score' => $score,
+                    ];
+                }
+            }
+            
+            // FALLBACK: Jika edge-only filtering membuat semua kandidat hilang
+            // Coba lagi dengan kandidat yang di-skip oleh edge-only
+            if (empty($validMiddleNumbers) && !empty($skippedByEdgeOnly)) {
+                foreach ($skippedByEdgeOnly as $candidate) {
+                    // Validasi lookahead untuk kandidat fallback
+                    $passesLookahead = $this->validateLookahead(
+                        $candidate['middle'], 
+                        $totalMembers, 
+                        $availableStalls, 
+                        $candidate['canUpper'], 
+                        $candidate['canUnder'],
+                        $participantGroup->event_id
+                    );
+                    
+                    if ($passesLookahead) {
+                        $score = $this->calculateSlotScore(
+                            $candidate['middle'], 
+                            $totalMembers, 
+                            $availableStalls, 
+                            $candidate['canUpper'], 
+                            $candidate['canUnder']
+                        );
+                        
+                        $validMiddleNumbers[] = [
+                            'middle' => $candidate['middle'],
+                            'canUpper' => $candidate['canUpper'],
+                            'canUnder' => $candidate['canUnder'],
+                            'score' => $score,
+                        ];
+                    }
+                }
+            }
+            
+            // FALLBACK LEVEL 2: Jika masih kosong, relax lookahead validation juga
+            // Gunakan kandidat dari skippedByEdgeOnly tanpa lookahead validation
+            if (empty($validMiddleNumbers) && !empty($skippedByEdgeOnly)) {
+                foreach ($skippedByEdgeOnly as $candidate) {
+                    $score = $this->calculateSlotScore(
+                        $candidate['middle'], 
+                        $totalMembers, 
+                        $availableStalls, 
+                        $candidate['canUpper'], 
+                        $candidate['canUnder']
+                    );
+                    
+                    $validMiddleNumbers[] = [
+                        'middle' => $candidate['middle'],
+                        'canUpper' => $candidate['canUpper'],
+                        'canUnder' => $candidate['canUnder'],
                         'score' => $score,
                     ];
                 }
@@ -324,7 +412,12 @@ class EventController extends Controller
                     ]);
                 } else {
                     // Grup 2-5 anggota HARUS berjejer, tidak boleh scattered
-                    throw new Error("Tidak ada slot berjejer yang tersedia untuk grup dengan {$totalMembers} anggota. Mohon atur ulang pengundian atau hubungi administrator.");
+                    // Berikan error message yang lebih detail untuk debugging
+                    $availableCount = count($availableStalls);
+                    $errorMsg = "Tidak ada slot berjejer yang tersedia untuk grup dengan {$totalMembers} anggota. ";
+                    $errorMsg .= "Slot tersedia: {$availableCount}. ";
+                    $errorMsg .= "Mohon atur ulang pengundian atau hubungi administrator.";
+                    throw new Error($errorMsg);
                 }
             }
 
@@ -1078,5 +1171,283 @@ class EventController extends Controller
     public function downloadTemplateImport()
     {
         return Excel::download(new ParticipantGroupsTemplateExport, 'template_import_peserta.xlsx');
+    }
+    
+    /**
+     * Validasi lookahead: Pastikan pilihan ini menyisakan slot berjejer untuk grup lain
+     * Simulasi jika kandidat ini dipilih, apakah sisa slot cukup untuk grup yang belum diundi?
+     */
+    private function validateLookahead($middleNumber, $totalMembers, $availableStalls, $canUpper, $canUnder, $eventId)
+    {
+        // Dapatkan semua grup yang belum diundi
+        $undrawnGroups = ParticipantGroup::where('event_id', $eventId)
+            ->where('raffle_status', ParticipantGroupRaffleStatusEnum::NOT_YET->value)
+            ->whereIn('status', [ParticipantGroupStatusEnum::DP->value, ParticipantGroupStatusEnum::PAID->value])
+            ->get();
+        
+        // Jika ini grup terakhir, tidak perlu validasi lookahead
+        if ($undrawnGroups->count() <= 1) {
+            return true; // Lolos validasi
+        }
+        
+        // Simulasi: Pilih UPPER atau UNDER (yang terbaik berdasarkan score)
+        $selectedSlots = [];
+        if ($canUpper && $canUnder) {
+            // Pilih yang menyisakan slot terpanjang
+            $upperSlots = $this->generateUpperNumbers($middleNumber, $totalMembers, $availableStalls);
+            $underSlots = $this->generateUnderNumbers($middleNumber, $totalMembers, $availableStalls);
+            
+            $remainingAfterUpper = array_diff($availableStalls, $upperSlots);
+            $remainingAfterUnder = array_diff($availableStalls, $underSlots);
+            
+            $longestAfterUpper = $this->findLongestConsecutiveGap($remainingAfterUpper, Constants::MAX_STALLS);
+            $longestAfterUnder = $this->findLongestConsecutiveGap($remainingAfterUnder, Constants::MAX_STALLS);
+            
+            // Pilih yang menyisakan gap terpanjang
+            $selectedSlots = ($longestAfterUpper >= $longestAfterUnder) ? $upperSlots : $underSlots;
+        } elseif ($canUpper) {
+            $selectedSlots = $this->generateUpperNumbers($middleNumber, $totalMembers, $availableStalls);
+        } elseif ($canUnder) {
+            $selectedSlots = $this->generateUnderNumbers($middleNumber, $totalMembers, $availableStalls);
+        } else {
+            return false; // Tidak ada pilihan valid
+        }
+        
+        // Hitung sisa slot setelah pilihan ini
+        $remainingSlots = array_diff($availableStalls, $selectedSlots);
+        
+        // VALIDASI KETAT: Hitung berapa banyak consecutive slots untuk setiap ukuran (2-5)
+        // dan bandingkan dengan jumlah grup yang membutuhkan ukuran tersebut
+        $groupsToCheck = $undrawnGroups->filter(function($group) use ($totalMembers) {
+            // Exclude grup saat ini dari pengecekan
+            return $group->total_member != $totalMembers;
+        });
+        
+        // Hitung kebutuhan consecutive slots per ukuran
+        $requiredConsecutiveSlots = [];
+        for ($size = 2; $size <= 5; $size++) {
+            $count = $groupsToCheck->where('total_member', $size)->count();
+            if ($count > 0) {
+                $requiredConsecutiveSlots[$size] = $count;
+            }
+        }
+        
+        // Hitung ketersediaan consecutive slots per ukuran di remaining slots
+        $availableConsecutiveSlots = $this->countConsecutiveSlotsBySize($remainingSlots);
+        
+        // Validasi: Apakah ketersediaan >= kebutuhan untuk setiap ukuran?
+        foreach ($requiredConsecutiveSlots as $size => $requiredCount) {
+            $availableCount = $availableConsecutiveSlots[$size] ?? 0;
+            
+            if ($availableCount < $requiredCount) {
+                // Tidak cukup consecutive slots untuk ukuran ini
+                return false; // Gagal validasi ❌
+            }
+        }
+        
+        // VALIDASI TAMBAHAN: Cek apakah ada gap dengan size 1 (slot sendirian)
+        // Gap size 1 hanya bisa diisi oleh grup dengan 1 anggota
+        // Jika tidak ada grup dengan 1 anggota, maka gap size 1 adalah WASTED SLOT
+        $hasGapOfOne = $this->hasGapOfOne($remainingSlots);
+        if ($hasGapOfOne) {
+            // Cek apakah ada grup dengan 1 anggota yang belum diundi
+            $hasGroupWithOneMember = $groupsToCheck->contains(function($group) {
+                return $group->total_member == 1;
+            });
+            
+            // Jika tidak ada grup dengan 1 anggota, maka gap size 1 tidak bisa diisi
+            if (!$hasGroupWithOneMember) {
+                return false; // Gagal validasi: ada gap size 1 yang tidak bisa diisi
+            }
+        }
+        
+        return true; // Lolos validasi ✅
+    }
+    
+    /**
+     * Cek apakah ada slot berjejer dengan ukuran tertentu
+     */
+    private function hasConsecutiveSlotsOfSize($availableSlots, $size)
+    {
+        if (count($availableSlots) < $size) {
+            return false;
+        }
+        
+        $available = array_values($availableSlots);
+        sort($available);
+        
+        $consecutiveCount = 1;
+        for ($i = 1; $i < count($available); $i++) {
+            if ($available[$i] == $available[$i - 1] + 1) {
+                $consecutiveCount++;
+                
+                // Cek boundary crossing (111-112)
+                $currentSequence = array_slice($available, $i - $consecutiveCount + 1, $consecutiveCount);
+                if ($this->crossesBoundary($currentSequence)) {
+                    $consecutiveCount = 1; // Reset jika cross boundary
+                    continue;
+                }
+                
+                if ($consecutiveCount >= $size) {
+                    return true; // Found consecutive slots
+                }
+            } else {
+                $consecutiveCount = 1; // Reset
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Hitung berapa banyak consecutive slots untuk setiap ukuran (2-5)
+     * Return: array dengan key = size, value = count
+     */
+    private function countConsecutiveSlotsBySize($availableSlots)
+    {
+        if (empty($availableSlots)) {
+            return [];
+        }
+        
+        $available = array_values($availableSlots);
+        sort($available);
+        
+        // Cari semua consecutive ranges
+        $consecutiveRanges = [];
+        $currentRange = [$available[0]];
+        
+        for ($i = 1; $i < count($available); $i++) {
+            if ($available[$i] == $available[$i - 1] + 1) {
+                // Cek boundary crossing
+                $testRange = array_merge($currentRange, [$available[$i]]);
+                if ($this->crossesBoundary($testRange)) {
+                    // Save current range dan mulai range baru
+                    if (count($currentRange) > 0) {
+                        $consecutiveRanges[] = $currentRange;
+                    }
+                    $currentRange = [$available[$i]];
+                } else {
+                    $currentRange[] = $available[$i];
+                }
+            } else {
+                // Save current range dan mulai range baru
+                if (count($currentRange) > 0) {
+                    $consecutiveRanges[] = $currentRange;
+                }
+                $currentRange = [$available[$i]];
+            }
+        }
+        
+        // Save range terakhir
+        if (count($currentRange) > 0) {
+            $consecutiveRanges[] = $currentRange;
+        }
+        
+        // Hitung berapa banyak slot untuk setiap ukuran (2-5)
+        // TIDAK menggunakan greedy allocation - hitung independent untuk setiap size
+        // Ini memastikan setiap size punya count yang akurat
+        $counts = [
+            2 => 0,
+            3 => 0,
+            4 => 0,
+            5 => 0,
+        ];
+        
+        foreach ($consecutiveRanges as $range) {
+            $rangeLength = count($range);
+            
+            // Untuk setiap ukuran, hitung berapa banyak grup yang bisa fit
+            // INDEPENDENT counting - tidak mengurangi range
+            for ($size = 2; $size <= 5; $size++) {
+                $canFit = (int)($rangeLength / $size);
+                $counts[$size] += $canFit;
+            }
+        }
+        
+        return $counts;
+    }
+    
+    /**
+     * Cek apakah kandidat ini adalah edge (ujung) dari consecutive range
+     * Edge-only selection diterapkan HANYA untuk range EXACTLY 4 dan 6
+     * Untuk grup 2: range 4 dan 6
+     * Untuk grup 3: range 6
+     */
+    private function isEdgeCandidate($middleNumber, $availableStalls, $canUpper, $canUnder)
+    {
+        // Cari consecutive range yang mengandung middleNumber
+        $available = array_values($availableStalls);
+        sort($available);
+        
+        // Cari range yang mengandung middleNumber
+        $rangeStart = null;
+        $rangeEnd = null;
+        $inRange = false;
+        
+        foreach ($available as $i => $num) {
+            if ($num == $middleNumber) {
+                // Found middleNumber, cari start dan end range
+                $rangeStart = $num;
+                $rangeEnd = $num;
+                
+                // Expand ke kiri
+                for ($j = $i - 1; $j >= 0; $j--) {
+                    if ($available[$j] == $available[$j + 1] - 1) {
+                        // Cek boundary
+                        $testRange = range($available[$j], $rangeStart);
+                        if (!$this->crossesBoundary($testRange)) {
+                            $rangeStart = $available[$j];
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Expand ke kanan
+                for ($j = $i + 1; $j < count($available); $j++) {
+                    if ($available[$j] == $available[$j - 1] + 1) {
+                        // Cek boundary
+                        $testRange = range($rangeEnd, $available[$j]);
+                        if (!$this->crossesBoundary($testRange)) {
+                            $rangeEnd = $available[$j];
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+                
+                break;
+            }
+        }
+        
+        if ($rangeStart === null || $rangeEnd === null) {
+            return true; // Fallback: allow if can't determine range
+        }
+        
+        $rangeLength = $rangeEnd - $rangeStart + 1;
+        
+        // EDGE-ONLY RULES untuk range EXACTLY 4 dan 6
+        // Range lain: Semua kandidat OK
+        
+        // Jika range == 4, hanya edge yang diperbolehkan
+        if ($rangeLength == 4) {
+            $isStartEdge = ($middleNumber == $rangeStart && $canUpper);
+            $isEndEdge = ($middleNumber == $rangeEnd && $canUnder);
+            return $isStartEdge || $isEndEdge;
+        }
+        
+        // Jika range == 6, hanya edge paling ujung yang diperbolehkan
+        if ($rangeLength == 6) {
+            $isAbsoluteStartEdge = ($middleNumber == $rangeStart && $canUpper);
+            $isAbsoluteEndEdge = ($middleNumber == $rangeEnd && $canUnder);
+            return $isAbsoluteStartEdge || $isAbsoluteEndEdge;
+        }
+        
+        // Range lain (bukan 4 atau 6): Semua kandidat OK
+        return true;
     }
 }
